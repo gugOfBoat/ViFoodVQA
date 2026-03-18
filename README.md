@@ -153,19 +153,6 @@ python src/03_kg_triple_extractor.py --limit 3      # Test với 3 món
 | `fromIngredient` | SubstitutionRule → Ingredient | — |
 | `toIngredient` | SubstitutionRule → Ingredient | — |
 
----
-
-## Trạng thái phát triển
-
-| Bước | Mô tả | Trạng thái |
-|------|-------|------------|
-| 1 | Entity Extraction (Supabase) | ✅ Done |
-| 2 | Entity Classification (Gemini LLM) | ✅ Done |
-| 3 | Web-Grounded Triple Extraction | 🔄 In Progress |
-| 4 | Neo4j Graph Loading | ⏳ Pending |
-
----
-
 ## Tech Stack
 
 - **Python 3.11+** — Ngôn ngữ chính

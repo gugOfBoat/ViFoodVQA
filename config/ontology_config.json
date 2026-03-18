@@ -284,8 +284,7 @@
   "triple_extraction_requirements": {
     "mandatory_properties": {
       "source_url": "URL nguồn web đã trích dẫn (bắt buộc cho mỗi triple)",
-      "evidence": "Đoạn văn bản gốc từ nguồn chứng minh triple này đúng",
-      "confidence": "Mức độ tin cậy: high / medium / low"
+      "evidence": "Đoạn văn bản gốc từ nguồn chứng minh triple này đúng"
     },
     "note": "Mỗi triple phải có source_url và evidence để đảm bảo tính minh bạch (web-grounded). Không chấp nhận triple không có nguồn."
   }

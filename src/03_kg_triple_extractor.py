@@ -166,15 +166,13 @@ Chỉ trả về JSON, không giải thích thêm.
 
 def call_gemini_extract(dishes_with_content, retries=3):
     """Send batch of dishes with crawled content to Gemini for triple extraction."""
-    import google.generativeai as genai
-
-    api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
+    from google import genai
+    
+    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+    if not GEMINI_API_KEY:
         print("GEMINI_API_KEY missing")
         sys.exit(1)
-
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel(GEMINI_MODEL)
+    client = genai.Client(api_key=GEMINI_API_KEY)
 
     # Build user message with crawled content per dish
     parts = []
@@ -190,9 +188,10 @@ def call_gemini_extract(dishes_with_content, retries=3):
 
     for attempt in range(1, retries + 1):
         try:
-            resp = model.generate_content(
-                EXTRACTION_PROMPT + "\n\n" + user_msg,
-                generation_config=genai.types.GenerationConfig(
+            resp = client.models.generate_content(
+                model=GEMINI_MODEL,
+                contents=EXTRACTION_PROMPT + "\n\n" + user_msg,
+                config=genai.types.GenerateContentConfig(
                     temperature=0.1,
                     max_output_tokens=16384,
                     response_mime_type="application/json",

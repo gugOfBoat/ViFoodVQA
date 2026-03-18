@@ -1,0 +1,414 @@
+[
+  {
+    "image_id": "image000038",
+    "image": "https://cafefcdn.com/203337114487263232/2026/1/11/1-1768152502648-176815250374629028067.jpg",
+    "dish": "Gà Luộc",
+    "qtype": "cooking_technique",
+    "question_vi": "Trong mâm cơm được trình bày trên bàn, món gà xuất hiện trong ảnh thường được chế biến bằng kỹ thuật nấu ăn nào?",
+    "choices": {
+      "A": "Hầm",
+      "B": "Ninh",
+      "C": "Luộc",
+      "D": "Rim"
+    },
+    "answer": "C",
+    "answer_text": "Luộc",
+    "rationale_vi": "Dựa trên hình ảnh món gà được bày biện, đây là món gà luộc. Theo tri thức ẩm thực, gà luộc là món ăn được chế biến bằng phương pháp luộc chín trong nước để giữ độ ngọt tự nhiên của thịt.",
+    "triples_used": [
+      {
+        "relation": "cookingTechnique",
+        "subject": "Gà Luộc",
+        "target": "Luộc",
+        "target_type": "CookingTechnique"
+      }
+    ],
+    "retrieved_triples_text": [
+      "Gà Luộc ; được chế biến bằng ; Luộc"
+    ],
+    "food_items": [
+      "Gà luộc",
+      "Khổ qua nhồi thịt",
+      "Chả giò",
+      "Gỏi xoài tai heo",
+      "Rau xào",
+      "Chả lụa",
+      "Sườn xào chua ngọt",
+      "Canh măng",
+      "Coca-Cola",
+      "Bia Sapporo",
+      "Chè các loại"
+    ],
+    "image_description": "Ảnh mờ, độ nhận dạng khó chính xác",
+    "anchor_entity": "Luộc"
+  },
+  {
+    "image_id": "image000038",
+    "image": "https://cafefcdn.com/203337114487263232/2026/1/11/1-1768152502648-176815250374629028067.jpg",
+    "dish": "Gà Luộc",
+    "qtype": "ingredient_category",
+    "question_vi": "Trong mâm cơm xuất hiện món gà luộc, nguyên liệu chính của món ăn này thuộc nhóm thực phẩm nào sau đây?",
+    "choices": {
+      "A": "Rau củ",
+      "B": "Sữa",
+      "C": "Ngũ cốc",
+      "D": "Thịt"
+    },
+    "answer": "D",
+    "answer_text": "Thịt",
+    "rationale_vi": "Món gà luộc được xác định trong ảnh có nguyên liệu chính là thịt gà, đây là loại thực phẩm thuộc nhóm thịt trong tháp dinh dưỡng.",
+    "triples_used": [
+      {
+        "relation": "hasIngredient",
+        "subject": "Gà Luộc",
+        "target": "Thịt Gà",
+        "target_type": "Ingredient"
+      },
+      {
+        "relation": "ingredientCategory",
+        "subject": "Thịt Gà",
+        "target": "Thịt",
+        "target_type": "IngredientCategory"
+      }
+    ],
+    "retrieved_triples_text": [
+      "Gà Luộc ; có nguyên liệu ; Thịt Gà",
+      "Thịt Gà ; thuộc nhóm nguyên liệu ; Thịt"
+    ],
+    "food_items": [
+      "Gà luộc",
+      "Khổ qua nhồi thịt",
+      "Chả giò",
+      "Gỏi xoài tai heo",
+      "Rau xào",
+      "Chả lụa",
+      "Sườn xào chua ngọt",
+      "Canh măng",
+      "Coca-Cola",
+      "Bia Sapporo",
+      "Chè các loại"
+    ],
+    "image_description": "Ảnh mờ, độ nhận dạng khó chính xác",
+    "anchor_entity": "Thịt Gà"
+  },
+  {
+    "image_id": "image000043",
+    "image": "https://cdn.giaoducthoidai.vn/images/883c1d87660f293ed303d36772ac35a26ccbe4aae62ed4322d226a167f7208aa1b141294137156146a309603320a8388/1-4658.jpg.webp",
+    "dish": "Canh Rau Ngót",
+    "qtype": "ingredient_category",
+    "question_vi": "Trong bát canh rau ngót xuất hiện trên bàn, nguyên liệu chính là rau ngót thuộc nhóm thực phẩm nào?",
+    "choices": {
+      "A": "Thủy Hải Sản",
+      "B": "Rau Nấm",
+      "C": "Rau Lá",
+      "D": "Động Vật"
+    },
+    "answer": "C",
+    "answer_text": "Rau Lá",
+    "rationale_vi": "Dựa trên hình ảnh, bát canh rau ngót là món ăn chính. Rau ngót là loại rau có lá, thuộc nhóm thực phẩm rau lá, cung cấp nhiều vitamin và khoáng chất.",
+    "triples_used": [
+      {
+        "relation": "hasIngredient",
+        "subject": "Canh Rau Ngót",
+        "target": "Rau Ngót",
+        "target_type": "Ingredient"
+      },
+      {
+        "relation": "ingredientCategory",
+        "subject": "Rau Ngót",
+        "target": "Rau Lá",
+        "target_type": "IngredientCategory"
+      }
+    ],
+    "retrieved_triples_text": [
+      "Canh Rau Ngót ; có nguyên liệu ; Rau Ngót",
+      "Rau Ngót ; thuộc nhóm nguyên liệu ; Rau Lá"
+    ],
+    "food_items": [
+      "Canh rau ngót",
+      "Đậu bắp xào trứng",
+      "Cà pháo muối",
+      "Cơm niêu",
+      "Sữa đậu nành"
+    ],
+    "image_description": "Không phải mâm cơm",
+    "anchor_entity": "Rau Ngót"
+  },
+  {
+    "image_id": "image000043",
+    "image": "https://cdn.giaoducthoidai.vn/images/883c1d87660f293ed303d36772ac35a26ccbe4aae62ed4322d226a167f7208aa1b141294137156146a309603320a8388/1-4658.jpg.webp",
+    "dish": "Canh Rau Ngót",
+    "qtype": "ingredients",
+    "question_vi": "Nguyên liệu chính nào tạo nên tên gọi của món canh xuất hiện trong ảnh?",
+    "choices": {
+      "A": "Rau Ngót",
+      "B": "Miến",
+      "C": "Bí Đỏ",
+      "D": "Cá Kèo"
+    },
+    "answer": "A",
+    "answer_text": "Rau Ngót",
+    "rationale_vi": "Dựa vào hình ảnh món canh được trình bày, đây là món canh rau ngót. Theo kiến thức ẩm thực, thành phần nguyên liệu chính và đặc trưng nhất để tạo nên món canh này chính là rau ngót.",
+    "triples_used": [
+      {
+        "relation": "hasIngredient",
+        "subject": "Canh Rau Ngót",
+        "target": "Rau Ngót",
+        "target_type": "Ingredient"
+      }
+    ],
+    "retrieved_triples_text": [
+      "Canh Rau Ngót ; có nguyên liệu ; Rau Ngót"
+    ],
+    "food_items": [
+      "Canh rau ngót",
+      "Đậu bắp xào trứng",
+      "Cà pháo muối",
+      "Cơm niêu",
+      "Sữa đậu nành"
+    ],
+    "image_description": "Không phải mâm cơm",
+    "anchor_entity": "Rau Ngót"
+  },
+  {
+    "image_id": "image000051",
+    "image": "https://cvdoasxazyruytejluvv.supabase.co/storage/v1/object/public/images/image000051.png",
+    "dish": "Phở Bò",
+    "qtype": "ingredient_category",
+    "question_vi": "Trong bát Phở bò xuất hiện trong ảnh, nguyên liệu chính là thịt bò thuộc nhóm thực phẩm nào dưới đây?",
+    "choices": {
+      "A": "Ngũ cốc",
+      "B": "Trái Cây",
+      "C": "Thịt",
+      "D": "Đậu"
+    },
+    "answer": "C",
+    "answer_text": "Thịt",
+    "rationale_vi": "Dựa trên hình ảnh món Phở bò, nguyên liệu chính là thịt bò. Theo kiến thức dinh dưỡng, thịt bò được phân loại vào nhóm thực phẩm giàu protein thuộc nhóm thịt.",
+    "triples_used": [
+      {
+        "relation": "hasIngredient",
+        "subject": "Phở Bò",
+        "target": "Thịt Bò",
+        "target_type": "Ingredient"
+      },
+      {
+        "relation": "ingredientCategory",
+        "subject": "Thịt Bò",
+        "target": "Thịt",
+        "target_type": "IngredientCategory"
+      }
+    ],
+    "retrieved_triples_text": [
+      "Phở Bò ; có nguyên liệu ; Thịt Bò",
+      "Thịt Bò ; thuộc nhóm nguyên liệu ; Thịt"
+    ],
+    "food_items": [
+      "Phở bò",
+      "Bê thui",
+      "Trứng cút chiên",
+      "Bún chả",
+      "Bánh khúc",
+      "Bún bò Huế",
+      "Bún mọc",
+      "Xôi lạp xưởng",
+      "Nem nướng"
+    ],
+    "image_description": "không phải mâm cơm",
+    "anchor_entity": "Thịt Bò"
+  },
+  {
+    "image_id": "image000051",
+    "image": "https://cvdoasxazyruytejluvv.supabase.co/storage/v1/object/public/images/image000051.png",
+    "dish": "Phở Bò",
+    "qtype": "ingredients",
+    "question_vi": "Trong bát Phở Bò xuất hiện trong ảnh, loại nguyên liệu chính nào dưới đây được sử dụng để chế biến món ăn này?",
+    "choices": {
+      "A": "Mít",
+      "B": "Tỏi",
+      "C": "Thịt Lợn",
+      "D": "Thịt Bò"
+    },
+    "answer": "D",
+    "answer_text": "Thịt Bò",
+    "rationale_vi": "Dựa trên hình ảnh món Phở Bò, nguyên liệu đặc trưng và bắt buộc để tạo nên món ăn này chính là thịt bò.",
+    "triples_used": [
+      {
+        "relation": "hasIngredient",
+        "subject": "Phở Bò",
+        "target": "Thịt Bò",
+        "target_type": "Ingredient"
+      }
+    ],
+    "retrieved_triples_text": [
+      "Phở Bò ; có nguyên liệu ; Thịt Bò"
+    ],
+    "food_items": [
+      "Phở bò",
+      "Bê thui",
+      "Trứng cút chiên",
+      "Bún chả",
+      "Bánh khúc",
+      "Bún bò Huế",
+      "Bún mọc",
+      "Xôi lạp xưởng",
+      "Nem nướng"
+    ],
+    "image_description": "không phải mâm cơm",
+    "anchor_entity": "Thịt Bò"
+  },
+  {
+    "image_id": "image000060",
+    "image": "https://media-int.vnecdn.net/3562759/data/images/2017/03/31/10-com-tam-vietnamese-food-X3_1490960006_VnEx_mobile_600x0.jpg",
+    "dish": "Cơm Tấm",
+    "qtype": "origin",
+    "question_vi": "Món ăn chính xuất hiện trong ảnh là Cơm Tấm, một món ăn đặc sản nổi tiếng có nguồn gốc từ vùng nào?",
+    "choices": {
+      "A": "Bắc Mỹ",
+      "B": "Hoa Kỳ",
+      "C": "Sài Gòn",
+      "D": "Miền Bắc Lào"
+    },
+    "answer": "C",
+    "answer_text": "Sài Gòn",
+    "rationale_vi": "Hình ảnh hiển thị đĩa Cơm Tấm với sườn nướng và trứng ốp la. Dựa trên kiến thức ẩm thực, Cơm Tấm là món ăn đặc trưng và có nguồn gốc lâu đời từ Sài Gòn.",
+    "triples_used": [
+      {
+        "relation": "originRegion",
+        "subject": "Cơm Tấm",
+        "target": "Sài Gòn",
+        "target_type": "Region"
+      }
+    ],
+    "retrieved_triples_text": [
+      "Cơm Tấm ; có nguồn gốc từ ; Sài Gòn"
+    ],
+    "food_items": [
+      "Cơm tấm",
+      "Sườn nướng",
+      "Trứng ốp la",
+      "Dưa leo",
+      "Cà chua",
+      "Nước mắm chua ngọt",
+      "Mỡ hành"
+    ],
+    "image_description": "Không đủ 3 món ăn",
+    "anchor_entity": "Sài Gòn"
+  },
+  {
+    "image_id": "image000060",
+    "image": "https://media-int.vnecdn.net/3562759/data/images/2017/03/31/10-com-tam-vietnamese-food-X3_1490960006_VnEx_mobile_600x0.jpg",
+    "dish": "Cơm Tấm",
+    "qtype": "ingredients",
+    "question_vi": "Thành phần chính nào tạo nên phần cơm trong đĩa Cơm Tấm xuất hiện trong ảnh?",
+    "choices": {
+      "A": "Củ Hủ Dừa",
+      "B": "Lươn",
+      "C": "Măng Chua",
+      "D": "Gạo Tấm"
+    },
+    "answer": "D",
+    "answer_text": "Gạo Tấm",
+    "rationale_vi": "Dựa vào hình ảnh đĩa Cơm Tấm, thành phần chính tạo nên món cơm này chính là gạo tấm, loại gạo bị vỡ trong quá trình xay xát, đây là đặc trưng cơ bản nhất của món ăn này.",
+    "triples_used": [
+      {
+        "relation": "hasIngredient",
+        "subject": "Cơm Tấm",
+        "target": "Gạo Tấm",
+        "target_type": "Ingredient"
+      }
+    ],
+    "retrieved_triples_text": [
+      "Cơm Tấm ; có nguyên liệu ; Gạo Tấm"
+    ],
+    "food_items": [
+      "Cơm tấm",
+      "Sườn nướng",
+      "Trứng ốp la",
+      "Dưa leo",
+      "Cà chua",
+      "Nước mắm chua ngọt",
+      "Mỡ hành"
+    ],
+    "image_description": "Không đủ 3 món ăn",
+    "anchor_entity": "Gạo Tấm"
+  },
+  {
+    "image_id": "image000097",
+    "image": "https://tgpsaigon.net/Images/Articles/MainImages/12102022_101118.jpg",
+    "dish": "Thịt Kho",
+    "qtype": "ingredient_category",
+    "question_vi": "Trong món thịt kho xuất hiện trong ảnh, nguyên liệu chính là thịt lợn thuộc nhóm thực phẩm nào dưới đây?",
+    "choices": {
+      "A": "Trái cây",
+      "B": "Thịt",
+      "C": "Ngũ cốc",
+      "D": "Rau củ"
+    },
+    "answer": "B",
+    "answer_text": "Thịt",
+    "rationale_vi": "Món thịt kho trong ảnh được chế biến từ thịt lợn. Theo phân loại dinh dưỡng, thịt lợn là nguồn cung cấp protein động vật nên thuộc nhóm thịt.",
+    "triples_used": [
+      {
+        "relation": "hasIngredient",
+        "subject": "Thịt Kho",
+        "target": "Thịt Lợn",
+        "target_type": "Ingredient"
+      },
+      {
+        "relation": "ingredientCategory",
+        "subject": "Thịt Lợn",
+        "target": "Thịt",
+        "target_type": "IngredientCategory"
+      }
+    ],
+    "retrieved_triples_text": [
+      "Thịt Kho ; có nguyên liệu ; Thịt Lợn",
+      "Thịt Lợn ; thuộc nhóm nguyên liệu ; Thịt"
+    ],
+    "food_items": [
+      "Cơm trắng",
+      "Đỗ xào",
+      "Thịt kho",
+      "Cà chua",
+      "Nước mắm"
+    ],
+    "image_description": "không phải mâm cơm",
+    "anchor_entity": "Thịt Lợn"
+  },
+  {
+    "image_id": "image000097",
+    "image": "https://tgpsaigon.net/Images/Articles/MainImages/12102022_101118.jpg",
+    "dish": "Thịt Kho",
+    "qtype": "ingredients",
+    "question_vi": "Món thịt kho xuất hiện trong ảnh được chế biến từ loại nguyên liệu chính nào sau đây?",
+    "choices": {
+      "A": "Thịt Lợn",
+      "B": "Thính Gạo",
+      "C": "Cá Trích",
+      "D": "Tôm"
+    },
+    "answer": "A",
+    "answer_text": "Thịt Lợn",
+    "rationale_vi": "Dựa trên hình ảnh món thịt kho, đây là món ăn truyền thống Việt Nam được chế biến từ thịt lợn kho cùng nước mắm và gia vị, phù hợp với kiến thức về thành phần nguyên liệu của món ăn này.",
+    "triples_used": [
+      {
+        "relation": "hasIngredient",
+        "subject": "Thịt Kho",
+        "target": "Thịt Lợn",
+        "target_type": "Ingredient"
+      }
+    ],
+    "retrieved_triples_text": [
+      "Thịt Kho ; có nguyên liệu ; Thịt Lợn"
+    ],
+    "food_items": [
+      "Cơm trắng",
+      "Đỗ xào",
+      "Thịt kho",
+      "Cà chua",
+      "Nước mắm"
+    ],
+    "image_description": "không phải mâm cơm",
+    "anchor_entity": "Thịt Lợn"
+  }
+]
