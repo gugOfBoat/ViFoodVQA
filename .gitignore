@@ -39,6 +39,8 @@ htmlcov/
 # Data (raw scraped data - ignore from git)
 data/raw_data/*.md
 
+slide/
+
 # OS
 .DS_Store
 Thumbs.db

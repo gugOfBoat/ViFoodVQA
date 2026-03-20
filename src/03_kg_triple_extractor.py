@@ -82,7 +82,7 @@ def crawl_wikipedia_vi(dish_name):
         for page in pages.values():
             text = page.get("extract", "")
             if text and len(text) > 100:
-                return text[:3000], page_url
+                return text[:10000], page_url
         return None, None
     except Exception:
         return None, None
@@ -101,13 +101,11 @@ def crawl_for_dish(dish_name):
     # Layer 2: LLM tự sinh triples từ kiến thức nội tại
     sources.append({
         "text": (
-            f"Không tìm được nguồn web cho món '{dish_name}'. "
-            f"Hãy sử dụng TRI THỨC NỘI TẠI của bạn để trích xuất triples. "
-            f"Với source_url, hãy ghi 'LLM_Knowledge'. "
-            f"Với evidence, hãy ghi mô tả ngắn gọn lý do bạn biết thông tin đó."
+            f"Không tìm được bài viết Wikipedia nào cho món '{dish_name}'. "
+            f"Bạn PHẢI sử dụng 100% Kiến thức Chuyên gia (Cognitive Reasoning) để điền vào TẤT CẢ 10 quan hệ trong Ontology cho món này."
         ),
-        "source_url": "LLM_Knowledge",
-        "source": "LLM Knowledge"
+        "source_url": "None",
+        "source": "None"
     })
 
     return sources
@@ -117,50 +115,57 @@ def crawl_for_dish(dish_name):
 # LLM EXTRACTION — Gemini extracts triples from crawled content
 # ══════════════════════════════════════════════════════════════════════════
 
-EXTRACTION_PROMPT = EXTRACTION_PROMPT = """
-Bạn là Kỹ sư Tri thức (Knowledge Engineer) cấp cao cho dự án ViFoodKG.
+EXTRACTION_PROMPT = """
+Bạn là Kỹ sư Tri thức (Knowledge Engineer) & Chuyên gia Ẩm thực cấp cao cho dự án ViFoodKG.
 
 NHIỆM VỤ: 
-Dựa vào nội dung văn bản được cào (crawl) từ web, hãy trích xuất TẤT CẢ các bộ ba tri thức (triples) cho mỗi món ăn. Bạn phải tuân thủ nghiêm ngặt Lược đồ (Ontology) và các quy tắc bọc thép dưới đây để đảm bảo KG đạt tiêu chuẩn nghiên cứu khoa học.
+Trích xuất một Đồ thị Tri thức (Knowledge Graph) TOÀN DIỆN cho mỗi món ăn, tuân thủ nghiêm ngặt Lược đồ đồ thị (Ontology) gồm 10 loại quan hệ dưới đây.
+Để hoàn thành nhiệm vụ, bạn phải sử dụng chiến lược "Hybrid Extraction":
+1. Bám sát Văn bản Nguồn (Web-Grounded): Trích xuất tối đa thông tin từ văn bản (được crawl từ Wikipedia) cung cấp bên dưới.
+2. Suy luận Lấp đầy (Reasoning & Enrichment): Đối với các quan hệ nằm trong Ontology nhưng BỊ THIẾU trong văn bản web (ví dụ: hasAllergen, flavorProfile, originRegion, servedWith), HÃY SỬ DỤNG KIẾN THỨC CHUYÊN GIA ẨM THỰC của bạn để tự suy luận và điền vào nhằm lấp đầy đồ thị. Tuyệt đối không để trống các quan hệ quan trọng nếu bạn biết câu trả lời.
 
-== 1. LƯỢC ĐỒ QUAN HỆ (ONTOLOGY) ==
-Bạn chỉ được phép trích xuất các quan hệ sau:
+== 1. LƯỢC ĐỒ QUAN HỆ (ONTOLOGY BẮT BUỘC) ==
 - hasIngredient: Dish -> Ingredient (Thành phần chính)
-- servedWith: Dish -> SideDish/Condiment (Món ăn kèm hoặc nước chấm)
-- originRegion: Dish -> Region (Vùng miền/tỉnh thành xuất xứ)
-- dishType: Dish -> DishType (Món nước, món khô, bánh, lẩu, xào...)
-- cookingTechnique: Dish -> CookingTechnique (Ninh, chiên, xào, hấp, nướng, luộc...)
-- flavorProfile: Dish -> FlavorProfile (Cay, chua, ngọt, mặn, béo...)
-- ingredientCategory: Ingredient -> IngredientCategory (Thịt, hải sản, rau lá, ngũ cốc...)
-- hasAllergen: Ingredient -> Allergen (Giáp xác, Gluten, Đậu nành, Đậu phộng...)
-- hasDietaryTag: Ingredient -> DietaryTag (Giá trị bắt buộc: "Chay" hoặc "Mặn")
-- hasSubRule: Dish -> SubstitutionRule (Kết nối đến nút quy tắc thay thế)
-- fromIngredient / toIngredient: SubstitutionRule -> Ingredient (Thành phần gốc và thành phần thay thế)
+- servedWith: Dish -> SideDish/Condiment (Rau thơm, chanh ớt, nước mắm...)
+- originRegion: Dish -> Region (Miền Bắc, Miền Nam, Huế...)
+- dishType: Dish -> DishType (Món nước, nướng, lẩu, xào, gỏi...)
+- cookingTechnique: Dish -> CookingTechnique (Ninh, chiên, nướng...)
+- flavorProfile: Dish -> FlavorProfile (Ngọt thanh, chua cay, đậm đà...)
+- ingredientCategory: Ingredient -> IngredientCategory (Thịt đỏ, hải sản...)
+- hasAllergen: Ingredient -> Allergen (GIÁP XÁC, ĐẬU PHỘNG, GLUTEN, ĐẬU NÀNH... Rất quan trọng! Nếu món có tôm/mắm tôm => Giáp xác. Nếu có nước tương => Đậu nành)
+- hasDietaryTag: Ingredient -> DietaryTag ("Chay" hoặc "Mặn")
+- hasSubRule: Dish -> SubstitutionRule (Có quy tắc thay thế nguyên liệu không?)
+- fromIngredient / toIngredient: SubstitutionRule -> Ingredient
 
-== 2. QUY TẮC TRÍCH XUẤT "THÉP" ==
-1. KHÔNG ẢO GIÁC: Chỉ trích xuất thông tin CÓ TRONG văn bản được cung cấp. Tuyệt đối không tự bịa ra thông tin từ kiến thức cá nhân.
-2. BẰNG CHỨNG (EVIDENCE): Mỗi Triple bắt buộc phải đi kèm:
-   - source_url: Link nguồn chứa thông tin đó.
-   - evidence: Copy y nguyên đoạn văn bản gốc trong bài viết làm căn cứ cho Triple.
-3. CHUẨN HÓA NHÃN: Tên các thực thể (canonical_label) phải viết bằng tiếng Việt có dấu, Title Case (Ví dụ: "Mắm Tôm", "Thịt Lợn").
-4. ĐA BƯỚC (MULTI-HOP): Ưu tiên trích xuất các quan hệ bổ trợ để tạo chuỗi. Nếu văn bản nói "Mắm tôm làm từ tôm", hãy trích xuất: (Mắm Tôm) -[hasIngredient]-> (Tôm) và (Tôm) -[hasAllergen]-> (Giáp Xác).
+== 2. QUY TẮC "NGUỒN & BẰNG CHỨNG" (SOURCE & EVIDENCE) ==
+Mỗi Triple bắt buộc phải có `source_url` và `evidence`:
+- NẾU thông tin lấy từ văn bản Wikipedia cung cấp: 
+   + `source_url` = URL của bài viết đó (đã cung cấp bên dưới dấu [Nguon: ...])
+   + `evidence` = Trích dẫn y nguyên câu văn gốc trong bài làm căn cứ.
+- NẾU thông tin do bạn tự suy luận bằng kiến thức chuyên gia (Common Sense):
+   + `source_url` = Nếu bạn BIẾT CHẮC 1 URL uy tín có thông tin này, hãy ghi URL đó. Nếu không, ghi "Cognitive_Reasoning" hoặc "LLM_Knowledge".
+   + `evidence` = Viết 1 câu NGẮN GỌN giải thích logic (VD: "Mắm tôm làm từ tôm tép lên men, là động vật giáp xác").
 
-== 3. ĐỊNH DẠNG ĐẦU RA (JSON ONLY) ==
-Trả về một JSON Array duy nhất. Mỗi phần tử là một món ăn với danh sách triples:
+== 3. CHUẨN HÓA NHÃN CỦA NODE ==
+Tên các thực thể (canonical_label) phải viết bằng tiếng Việt có dấu, Title Case (Ví dụ: "Hành Lá", "Thịt Bò").
 
-{
-  "dish": "Tên Món Ăn",
-  "triples": [
-    {
-      "subject": "Tên Thực Thể Đầu",
-      "relation": "hasIngredient",
-      "target": "Tên Thực Thể Cuối",
-      "target_type": "Ingredient",
-      "source_url": "URL nguồn",
-      "evidence": "Câu văn gốc trích dẫn..."
-    }
-  ]
-}
+== 4. ĐỊNH DẠNG ĐẦU RA (JSON ONLY) ==
+Trích xuất tối đa có thể cho 10 quan hệ của MỖI món ăn. Trả về một JSON Array duy nhất:
+[
+  {
+    "dish": "Tên Món Ăn",
+    "triples": [
+      {
+        "subject": "Tên Thực Thể Đầu",
+        "relation": "hasAllergen",
+        "target": "Giáp Xác",
+        "target_type": "Allergen",
+        "source_url": "Cognitive_Reasoning",
+        "evidence": "Nước mắm làm từ cá (một loại hải sản) thường gây dị ứng."
+      }
+    ]
+  }
+]
 Chỉ trả về JSON, không giải thích thêm.
 """
 
@@ -182,7 +187,7 @@ def call_gemini_extract(dishes_with_content, retries=3):
         parts.append(f"\n=== MON AN: {dish_name} ===")
         for src in sources:
             parts.append(f"[Nguon: {src['source_url']}]")
-            parts.append(src["text"][:2000])
+            parts.append(src["text"][:10000])
         if not sources:
             parts.append("(Khong co noi dung crawl duoc)")
 
@@ -193,7 +198,7 @@ def call_gemini_extract(dishes_with_content, retries=3):
             resp = model.generate_content(
                 EXTRACTION_PROMPT + "\n\n" + user_msg,
                 generation_config=genai.types.GenerationConfig(
-                    temperature=0.1,
+                    temperature=0.3, # Allow cognitive reasoning natively
                     max_output_tokens=16384,
                     response_mime_type="application/json",
                 ),
