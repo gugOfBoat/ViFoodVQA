@@ -38,8 +38,13 @@ Dự án được chia thành 5 giai đoạn liên tiếp. Mỗi giai đoạn đ
 ### 3. Khai phá Tri thức (Web-Grounded Triple Extraction)
 **Script:** `03_kg_triple_extractor.py`
 - Thu thập dữ liệu từ Wikipedia Tiếng Việt cho từng món ăn.
-- Prompt LLM Gemini đọc hiểu văn bản web và trích xuất thành các Knowledge Triples `(Subject) -[Relation]-> (Target)`.
-- Fallback: Nếu không tìm thấy thông tin trên Web, yêu cầu LLM tự dùng kiến thức nội bộ để sinh bộ ba (đánh dấu source là `LLM_Knowledge`).
+- Lấy tri thức lai (Hybrid Extraction): Prompt LLM Gemini đọc hiểu văn bản web và trích xuất thành các Knowledge Triples `(Subject) -[Relation]-> (Target)`. Sau đó, yêu cầu LLM sử dụng "Kiến thức Nội bộ Chuyên gia" (Common Sense/Cognitive Reasoning) để điền vào các vùng thông tin còn thiếu (như Dị ứng, Hương vị, Vùng miền).
+- Fallback: Nếu không tìm thấy thông tin trên Web, ép LLM bật chế độ Suy luận Đặc biệt để sinh bộ ba (đánh dấu source là `LLM_Knowledge`).
+
+### 3b. Khám phá và Thống kê Đồ thị (Neo4j EDA)
+**Notebook:** `notebooks/Neo4j_KG_EDA.ipynb`
+- File Jupyter Notebook cung cấp giao diện tương tác trực tiếp với cơ sở dữ liệu Neo4j.
+- Chứa các hàm cơ bản để thống kê số lượng Nodes, Relationships, truy vấn các món ăn mồ côi, đếm phân bố loại quan hệ, và trực quan hóa subgraph mẫu.
 
 ### 4. Đổ dữ liệu lên Neo4j (Neo4j Ingestion)
 **Script:** `04_kg_neo4j_ingestor.py`
