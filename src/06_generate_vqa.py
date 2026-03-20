@@ -340,6 +340,7 @@ def fetch_image_rows(
     only_approved_images: bool,
     start_image_id: str = "",
     end_image_id: str = "",
+    allowed_image_ids: set[str] | None = None,
 ) -> list[dict[str, Any]]:
     select_cols = f"{id_col}, {image_col}, {desc_col}, {items_col}, is_checked, is_drop"
     query = (
@@ -355,8 +356,32 @@ def fetch_image_rows(
         query = query.gte(id_col, start_image_id)
     if end_image_id:
         query = query.lte(id_col, end_image_id)
+    if allowed_image_ids:
+        query = query.in_(id_col, sorted(allowed_image_ids))
     resp = query.range(page * size, (page + 1) * size - 1).execute()
     return resp.data or []
+
+
+def load_allowed_image_ids(path_str: str) -> set[str]:
+    path_str = norm_text(path_str)
+    if not path_str:
+        return set()
+
+    p = Path(path_str)
+    if not p.exists():
+        raise FileNotFoundError(f"Image id file not found: {p}")
+
+    if p.suffix.lower() == ".json":
+        data = json.loads(p.read_text(encoding="utf-8"))
+        if not isinstance(data, list):
+            raise ValueError("image_ids json must be a list")
+        return {norm_text(x) for x in data if norm_text(x)}
+
+    return {
+        norm_text(line)
+        for line in p.read_text(encoding="utf-8").splitlines()
+        if norm_text(line)
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -943,6 +968,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output-dir", default=str(DEFAULT_OUTPUT_DIR))
     parser.add_argument("--start-image-id", default="")
     parser.add_argument("--end-image-id", default="")
+    parser.add_argument("--image-ids-file", default="")
     parser.add_argument("--limit-samples", type=int, default=0)
     parser.add_argument("--limit-images", type=int, default=0, help=argparse.SUPPRESS)
     parser.add_argument("--start-page", type=int, default=-1)
@@ -987,6 +1013,8 @@ def main() -> None:
     generated = list(progress.get("generated", []))
     questions_by_pair, answers_by_pair, question_keys = build_existing_maps(generated)
 
+    allowed_image_ids = load_allowed_image_ids(args.image_ids_file)
+
     supabase = make_supabase_client()
     gemini_client = make_gemini_client()
     kg = make_retriever(device=args.device)
@@ -1017,6 +1045,8 @@ def main() -> None:
                 "->",
                 norm_text(args.end_image_id) or "<max>",
             )
+        if allowed_image_ids:
+            print(f"Filtered image ids: {len(allowed_image_ids)}")
         if limit_samples > 0:
             print(f"Limit samples: {limit_samples}")
         print(f"Questions per qtype: {args.questions_per_qtype}")
@@ -1037,6 +1067,7 @@ def main() -> None:
                 only_approved_images=args.only_approved_images,
                 start_image_id=norm_text(args.start_image_id),
                 end_image_id=norm_text(args.end_image_id),
+                allowed_image_ids=allowed_image_ids,
             )
             if not rows:
                 break
