@@ -15,11 +15,9 @@ Runs are resumable. Reuse the same ``--output-dir`` after an interruption to
 continue from the last saved checkpoint instead of starting over.
 
 Examples:
-    python 07_debug_missing_vqa.py
-        --image-ids-file data/missing_image_ids.json      
-        --output-dir outputs/debug_missing
+    python 07_debug_missing_vqa.py         --image-ids-file data/missing_image_ids.json         --output-dir outputs/debug_missing
 
-    python 07_debug_missing_vqa.py --start 0 --end 100 --output-dir /content/drive/MyDrive/ViFoodKG_outputs/debug_missing
+    python 07_debug_missing_vqa.py         --start 0 --end 100         --output-dir outputs/debug_missing
 """
 
 from __future__ import annotations
@@ -280,15 +278,19 @@ def generate_one_sample_debug(
     image_id = image_row["image_id"]
     qtype = qmeta["canonical_qtype"]
 
-    retrieval_query = base.build_retrieval_query(
-        qmeta=qmeta,
-        dish=anchor_dish,
-        image_desc=image_row["image_description"],
-        food_items=image_row["food_items"],
-    )
+    retrieval_query = base.build_retrieval_query(qmeta=qmeta)
+    retrieval_relations = base.get_retrieval_relations(qmeta)
+    retrieve_top_k = top_k
+    if qmeta.get("canonical_qtype") == "substitution_rules":
+        retrieve_top_k = max(top_k, 12)
 
     try:
-        retrieved = kg.retrieve(items=[anchor_dish], question=retrieval_query, top_k=top_k)
+        retrieved = kg.retrieve(
+            items=[anchor_dish],
+            question=retrieval_query,
+            top_k=retrieve_top_k,
+            allowed_relations=retrieval_relations,
+        )
     except Exception as exc:  # noqa: BLE001
         logs.append(
             {
@@ -466,7 +468,7 @@ def parse_args():
     parser.add_argument("--items-col", default="food_items")
     parser.add_argument("--vqa-table", default="vqa")
     parser.add_argument("--question-types-csv", default=str(base.QUESTION_TYPES_FILE))
-    parser.add_argument("--output-dir", default=str(PROJECT_ROOT / "data" / "vqa_debug"))
+    parser.add_argument("--output-dir", default=str(PROJECT_ROOT / "data" / "vqa_rerun_missing"))
     parser.add_argument("--qtypes", nargs="*", default=[])
     parser.add_argument("--top-k", type=int, default=base.TOP_K)
     parser.add_argument("--seed", type=int, default=base.DEFAULT_SEED)
@@ -535,21 +537,17 @@ def main():
             answers_by_pair.setdefault((image_id, qtype), set()).add(answer_key)
 
     try:
-        embedded_edges = base.count_embedded_edges(kg)
-        if embedded_edges == 0:
-            raise RuntimeError("No relationship embeddings found in Neo4j")
+        total_relations = base.count_total_relations(kg)
+        if total_relations == 0:
+            raise RuntimeError("No relationships found in Neo4j")
 
-        substitution_emb = base.count_substitution_embeddings(kg)
-        if substitution_emb == 0 and any(q["canonical_qtype"] == "substitution_rules" for q in requested_qtypes):
-            print(
-                "[WARN] substitution_rules is disabled because fromIngredient/toIngredient embeddings are missing."
-            )
-            requested_qtypes = [q for q in requested_qtypes if q["canonical_qtype"] != "substitution_rules"]
+        substitution_edges = base.count_substitution_edges(kg)
 
         dish_aliases = base.fetch_all_dishes(kg)
 
         print(f"Loaded {len(dish_aliases)} dishes from Neo4j")
-        print(f"Embedded relationships: {embedded_edges}")
+        print(f"Total relationships in KG: {total_relations}")
+        print(f"Substitution edges in KG: {substitution_edges}")
         print("Question types:", ", ".join(q["canonical_qtype"] for q in requested_qtypes))
         if image_ids_from_file:
             print(f"Target image ids from file: {len(image_ids_from_file)}")
