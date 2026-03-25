@@ -384,15 +384,28 @@ def resolve_mapping_rows(
             missing.append(item)
             continue
 
+        is_used = bool(item["is_used"])
+        is_retrieved = bool(item["is_retrieved"])
+
         resolved.append(
             {
                 "vqa_id": item["vqa_id"],
                 "triple_id": triple_id,
-                "is_used": bool(item["is_used"]),
-                "is_retrieved": bool(item["is_retrieved"]),
+                "is_used": is_used,
+                "is_retrieved": is_retrieved,
+                # A triple is considered active for a VQA only when it belongs
+                # to the final triples_used set for that question.
+                "is_active_for_vqa": is_used,
+                # This script is only a structural backfill from raw JSON fields.
+                # It must not mark rows as human-reviewed.
+                "triple_review_status": None,
+                "triple_review_note": None,
                 "used_order": item.get("used_order"),
                 "retrieval_rank": item.get("retrieval_rank"),
                 "retrieved_from_food_items": item.get("retrieved_from_food_items") or [],
+                "replaced_by_triple_id": None,
+                "reviewed_from_page": None,
+                "reviewed_at": None,
                 "updated_at": timestamp,
             }
         )
