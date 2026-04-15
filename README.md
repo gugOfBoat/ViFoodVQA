@@ -2,98 +2,161 @@
   <img src="https://img.shields.io/badge/Neo4j-008CC1?style=for-the-badge&logo=neo4j&logoColor=white" />
   <img src="https://img.shields.io/badge/Gemini-8E75B2?style=for-the-badge&logo=google-gemini&logoColor=white" />
   <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white" />
-  <img src="https://img.shields.io/badge/Sentence_Transformers-FF9D00?style=for-the-badge&logo=huggingface&logoColor=white" />
+  <img src="https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white" />
+  <img src="https://img.shields.io/badge/Supabase-3FCF8E?style=for-the-badge&logo=supabase&logoColor=white" />
 
-  # 🍜 ViFoodKG: Vietnamese Food Knowledge Graph
-  ### *Hệ thống Tri thức Ẩm thực Việt Nam phục vụ Visual Question Answering (VQA)*
+  # 🍜 ViFoodKG
+  ### Vietnamese Food Knowledge Graph for Visual Question Answering
 </div>
 
 ---
 
-**ViFoodKG** là một Knowledge Graph (Đồ thị Tri thức) chuyên sâu về ẩm thực Việt Nam, được thiết kế đặc biệt để làm nền tảng lưu trữ và truy xuất cho hệ thống RAG (Retrieval-Augmented Generation) phục vụ bài toán Visual Question Answering (VQA).
+**ViFoodKG** is a research project that builds a Knowledge Graph of Vietnamese cuisine and uses it for **grounded Visual Question Answering (VQA)**. The system extracts culinary knowledge from Wikipedia and LLM reasoning, stores it in a Neo4j graph with vector-indexed edges, and generates multiple-choice questions that are verified by human annotators.
 
-Dự án này tự động khai phá tri thức từ web tĩnh (Wikipedia), trích xuất các bộ ba tri thức (triples) thông qua LLM (Google Gemini), lưu trữ cấu trúc Topology trên hệ quản trị cơ sở dữ liệu đồ thị **Neo4j**, và tích hợp **Vector Search** trên đồ thị (Hybrid Retrieval).
+## Repository Structure
 
----
+This repository contains three main modules:
 
-## 🌟 Tính năng nổi bật
+| Module | Description | Docs |
+|--------|-------------|------|
+| [`ViFoodKG/`](ViFoodKG/) | Knowledge Graph construction pipeline — 5 stages from entity extraction to graph vectorization | [README](ViFoodKG/README.md) |
+| [`ViFoodVQA/`](ViFoodVQA/) | VQA sample generation using KG retrieval + Gemini | [README](ViFoodVQA/README.md) |
+| [`streamlit/`](streamlit/) | Annotation & verification tool for VQA quality control | [README](streamlit/README.md) |
 
-1. **Web-Grounded Extraction:** 100% tri thức trích xuất đều được neo với Nguồn (URL) và Bằng chứng (Evidence textual snippet), chống hội chứng "ảo giác" (hallucination) của LLM.
-2. **Comprehensive Ontology:** Mô hình hóa 11 loại thực thể (Dish, Ingredient, Region, Allergen, v.v.) và 10 mối quan hệ phức tạp (1-hop, 2-hop, và reification qua quy tắc thay thế nguyên liệu).
-3. **Graph-Vector Hybrid Retrieval:** Chiến lược truy xuất kết hợp Lược đồ Đồ thị (Neo's Graph Traversal) và Không gian Vector (Cosine Similarity) để đem lại độ chính xác cục bộ cao nhất.
----
+**Shared resources:**
 
-## 🏗️ Kiến trúc & Quy trình (The Pipeline)
+| Path | Purpose |
+|------|---------|
+| `config/ontology_config.json` | Ontology schema — 10 entity types, 12 relations, 11 question types |
+| `config/Question Type.md` | Human-readable question type reference |
+| `supabase/` | PostgreSQL migration scripts (ordered: 000 → 001 → 002) |
+| `docs/` | Architecture, contracts, and analysis reports |
 
-Dự án được chia thành 5 giai đoạn liên tiếp. Mỗi giai đoạn đại diện cho một script trong thư mục `src/`:
+## How it Works
 
-### 1. Trích xuất Thực thể (Entity Extraction)
-**Script:** `01_kg_entity_extractor.py`
-- Lọc danh sách món ăn từ các nhãn thô (raw labels) có trong cơ sở dữ liệu ảnh (Supabase). Output: `raw_unique_labels.json`.
+```
+Wikipedia + LLM  ──►  Knowledge Graph (Neo4j)  ──►  VQA Generation  ──►  Human Verification
+                      10 entity types                via Gemini           Streamlit app
+                      12 relations                    grounded in KG       annotation rubric
+                      vector-indexed edges            multiple-choice      KEEP/DROP workflow
+```
 
-### 2. Phân loại & Chuẩn hóa Thực thể (Entity Classification)
-**Script:** `02_kg_entity_classifier.py`
-- Sử dụng Gemini API để làm sạch dữ liệu nhiễu, chuyển các nhãn thô thành tên món ăn chuẩn (ví dụ "bun_bo" → "Bún Bò Huế") và phân loại thành các danh mục (MainDish, Ingredient, Region...). Output: `master_entities.json`.
+**Detailed pipeline:**
 
-### 3. Khai phá Tri thức (Web-Grounded Triple Extraction)
-**Script:** `03_kg_triple_extractor.py`
-- Thu thập dữ liệu từ Wikipedia Tiếng Việt cho từng món ăn.
-- Lấy tri thức lai (Hybrid Extraction): Prompt LLM Gemini đọc hiểu văn bản web và trích xuất thành các Knowledge Triples `(Subject) -[Relation]-> (Target)`. Sau đó, yêu cầu LLM sử dụng "Kiến thức Nội bộ Chuyên gia" (Common Sense/Cognitive Reasoning) để điền vào các vùng thông tin còn thiếu (như Dị ứng, Hương vị, Vùng miền).
-- Fallback: Nếu không tìm thấy thông tin trên Web, ép LLM bật chế độ Suy luận Đặc biệt để sinh bộ ba (đánh dấu source là `LLM_Knowledge`).
+1. **Entity Extraction** — Extract food labels from image database (Supabase)
+2. **Entity Classification** — Normalize and classify via Gemini
+3. **Triple Extraction** — Web-grounded + LLM reasoning knowledge extraction
+4. **Neo4j Ingestion** — Load into graph with MERGE (idempotent)
+5. **Vectorization** — Embed edge text for hybrid retrieval
+6. **VQA Generation** — Retrieve KG triples → build candidates → generate questions via Gemini
+7. **Human Verification** — Streamlit annotation tool with rubric-based scoring
 
-### 3b. Khám phá và Thống kê Đồ thị (Neo4j EDA)
-**Notebook:** `notebooks/Neo4j_KG_EDA.ipynb`
-- File Jupyter Notebook cung cấp giao diện tương tác trực tiếp với cơ sở dữ liệu Neo4j.
-- Chứa các hàm cơ bản để thống kê số lượng Nodes, Relationships, truy vấn các món ăn mồ côi, đếm phân bố loại quan hệ, và trực quan hóa subgraph mẫu.
+See [`docs/architecture.md`](docs/architecture.md) for the full architecture and artifact flow.
 
-### 4. Đổ dữ liệu lên Neo4j (Neo4j Ingestion)
-**Script:** `04_kg_neo4j_ingestor.py`
-- Parse file JSON để tạo các Nodes và Relationships tren Neo4j Cloud (AuraDB).
-- Xử lý phức tạp: **Reification** (Vật hóa) đối với quy tắc mô tả linh hoạt sự thay thế nguyên liệu (ví dụ: *Bún Chả có thể thay thịt lợn bằng thịt bò* tạo thành chuỗi 3 nodes `Dish → SubstitutionRule → Ingredient`).
-- Văn bản hóa (Verbalization) các cung (edges) phục vụ cho Vectorization sau này.
+## Setup
 
-### 5. Nhúng Vector & Indexing (NeoEdge Vectorization)
-**Script / Notebook:** `05_kg_vectorizer.py` & `notebooks/05_vectorizer_colab.py`
-- Sử dụng mô hình `intfloat/multilingual-e5-small` để biến các thuộc tính `verbalized_text` nằm trên Edge (Mối quan hệ) thành Vector 384 chiều.
-- Lưu lại vào thuộc tính `embedding` của cạnh và tạo **Vector Index** trên Neo4j bằng thuật toán độ đo Cosine.
+### Prerequisites
 
----
+- Python ≥ 3.11
+- [Neo4j AuraDB](https://neo4j.com/cloud/aura/) instance (or local Neo4j)
+- [Supabase](https://supabase.com/) project with the image/VQA schema
+- [Google Gemini API](https://ai.google.dev/) key
 
-## 🔍 Chiến lược trích xuất triples
+### 1. Clone & Install
 
-Dữ liệu đầu vào: `danh_sách_thực_thể_trong_ảnh` (từ mô hình CV) + `câu_hỏi_của_user` (Text).
+```bash
+git clone https://github.com/gugOfBoat/vifoodKG.git
+cd vifoodKG
 
-1. **Neo (Anchor):** 
-   Thay vì chạy "Vector Search" toàn bộ cơ sở dữ liệu làm nhiễu thông tin, chúng ta giới hạn vùng không gian đồ thị bằng cách neo (MATCH) vào những Node Thực thể đang xuất hiện cụ thể trong ảnh.
-2. **Traverse (Mở rộng):**
-   Tìm tất cả các mối quan hệ xuất phát từ những Node được neo. Hỗ trợ quét các mối quan hệ trực tiếp (1-hop) lẫn các quan hệ bắc cầu nâng cao (2-hop) như *Dish → Ingredient → Allergen*.
-3. **Rank (Xếp hạng):**
-   Cộng gộp danh sách thực thể với câu hỏi của người dùng để tạo thành một Vector Ý định (Query Vector). Dùng tích Vô hướng Cosine so sánh Vector Ý định này với các Vector của cung (Edge Embeddings) đã thu được ở bước 2. Đặc biệt, nếu một cung nối 2 đầu là 2 thực thể cùng có mặt trong ảnh (Internal Link), cung đó sẽ được cộng điểm thưởng ưu tiên.
+# Install all dependencies (KG pipeline + VQA generation share the same deps)
+cd ViFoodKG
+pip install -e ".[dev]"
+```
 
-Kết quả cuối cùng là **Top K Knowledge Triples** phù hợp nhất theo cả ngữ cảnh thị giác và ngữ nghĩa để đẩy vào LLM sinh câu trả lời VQA. 
+### 2. Configure Environment
 
----
+Each module needs its own `.env` file. Copy the examples:
 
-## ⚙️ Cài đặt & Cấu hình (Local)
+```bash
+cp ViFoodKG/.env.example ViFoodKG/.env
+cp ViFoodVQA/.env.example ViFoodVQA/.env
+```
 
-1. **Clone dự án & Cài đặt môi trường:**
-   ```bash
-   git clone https://github.com/gugOfBoat/vifoodKG.git
-   cd vifoodKG
-   # Cài đặt qua uv hoặc pip
-   pip install -r requirements.txt # (nếu có)
-   # Hoặc cài module tay
-   pip install neo4j sentence-transformers python-dotenv google-generativeai requests beautifulsoup4
-   ```
+Fill in:
+- `NEO4J_URI`, `NEO4J_USERNAME`, `NEO4J_PASSWORD`
+- `SUPABASE_URL`, `SUPABASE_KEY`
+- `GEMINI_API_KEY`
 
-2. **Tạo biến môi trường `.env`:**
-   Dựa vào file `.env.example`, tạo file `.env` tại thư mục gốc và điền các khóa bảo mật (API keys, Neo4j credentials).
+For the Streamlit app, configure `streamlit/.streamlit/secrets.toml`:
+```toml
+SUPABASE_KEY = "your_key_here"
+```
 
-3. **Thực thi Query Testing:**
-   ```bash
-   # Truy vấn xem nguyên liệu món ăn
-   python src/query.py -i "Phở Bò" "Thịt Bò" -q "nguyên liệu chính" -k 5
-   
-   # Cần xuất JSON để pipe cho các service khác
-   python src/query.py -i "Bánh Xèo" -q "chất gây dị ứng" -k 3 --json
-   ```
+### 3. Initialize the Database
+
+Run the Supabase migrations in order:
+
+```sql
+-- Run in Supabase SQL Editor
+-- 1. Base tables
+-- supabase/000_image_vqa_triple.sql
+
+-- 2. Extended schema + mapping tables
+-- supabase/001_vqa_kg_triple_map.sql
+
+-- 3. Edit log table
+-- supabase/002_kg_triple_edit_log.sql
+```
+
+## Common Workflows
+
+### Run the KG pipeline (stages 1–5)
+
+```bash
+cd ViFoodKG
+python src/01_kg_entity_extractor.py
+python src/02_kg_entity_classifier.py
+python src/03_kg_triple_extractor.py
+python src/04_kg_neo4j_ingestor.py
+python src/05_kg_vectorizer.py
+```
+
+### Query the KG
+
+```bash
+cd ViFoodVQA
+python src/query.py -i "Phở Bò" "Thịt Bò" -q "nguyên liệu chính" -k 5
+python src/query.py -i "Bánh Xèo" -q "chất gây dị ứng" -k 3 --json
+```
+
+### Generate VQA samples
+
+```bash
+cd ViFoodVQA
+python src/01_generate_vqa.py --limit-images 20
+python src/01_generate_vqa.py --qtypes ingredients origin_locality
+```
+
+### Run the annotation tool
+
+```bash
+cd streamlit
+pip install -r requirements.txt
+streamlit run app.py
+```
+
+## Deeper Documentation
+
+| Doc | Purpose |
+|-----|---------|
+| [`AGENTS.md`](AGENTS.md) | Coding agent guide: module map, safe changes, change impact |
+| [`docs/architecture.md`](docs/architecture.md) | System architecture and artifact flow |
+| [`docs/contracts/triple_schema.md`](docs/contracts/triple_schema.md) | Triple JSON interface contract |
+| [`docs/contracts/ontology_config.md`](docs/contracts/ontology_config.md) | Ontology governance and change impact |
+| [`docs/VERIFY_VQA_GUIDELINE.md`](docs/VERIFY_VQA_GUIDELINE.md) | VQA verification rubric for annotators |
+| [`docs/KNOWLEDGE_GAP_REPORT.md`](docs/KNOWLEDGE_GAP_REPORT.md) | KG coverage analysis and enrichment results |
+| [`docs/retrieve_logic_changes_report.md`](docs/retrieve_logic_changes_report.md) | Retrieval strategy evolution |
+
+## License
+
+This project is developed as part of academic research at HCMUS.
