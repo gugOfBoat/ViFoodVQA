@@ -1628,7 +1628,7 @@ def load_verify_triples_page() -> None:
     end_triple_id = st.sidebar.number_input(
         "Đến triple ID:",
         min_value=1,
-        value=2072,
+        value=1648,
         step=1,
         key="triple_end_id",
     )
@@ -1706,9 +1706,9 @@ def load_verify_triples_page() -> None:
     left, right = st.columns([1.0, 1.1])
     with left:
         st.subheader("Thông tin triple")
-        st.write(f"**Subject:** {current_row['subject']}")
-        st.write(f"**Relation:** {current_row['relation']}")
-        st.write(f"**Target:** {current_row['target']}")
+        edited_subject = st.text_input("Subject", value=current_row["subject"], key=f"kg_subj_{selected_triple_id}")
+        edited_relation = st.text_input("Relation", value=current_row["relation"], key=f"kg_rel_{selected_triple_id}")
+        edited_target = st.text_input("Target", value=current_row["target"], key=f"kg_tgt_{selected_triple_id}")
         evidence = norm_text(current_row.get("evidence"))
         source_url = norm_text(current_row.get("source_url"))
         if evidence:
@@ -1744,23 +1744,24 @@ def load_verify_triples_page() -> None:
         if not linked_rows:
             st.info("Chưa có linked VQA hoặc chưa có bảng `vqa_kg_triple_map`.")
         else:
-            for row in linked_rows[:20]:
-                with st.container(border=True):
-                    st.write(f"**VQA #{row.get('vqa_id')}** | image `{row.get('image_id')}` | qtype `{row.get('qtype')}`")
-                    st.write(norm_text(row.get("question")) or "(trống)")
-                    badges = []
-                    if row.get("triple_review_status"):
-                        badges.append(f"status={row['triple_review_status']}")
-                    if row.get("is_active_for_vqa") is True:
-                        badges.append("active")
-                    elif row.get("is_active_for_vqa") is False:
-                        badges.append("inactive")
-                    if row.get("is_retrieved") is True:
-                        badges.append("retrieved")
-                    if row.get("is_used") is True:
-                        badges.append("used")
-                    if badges:
-                        st.caption(" | ".join(badges))
+            with st.container(height=400):
+                for row in linked_rows[:50]:
+                    with st.container(border=True):
+                        st.write(f"**VQA #{row.get('vqa_id')}** | image `{row.get('image_id')}` | qtype `{row.get('qtype')}`")
+                        st.write(norm_text(row.get("question")) or "(trống)")
+                        badges = []
+                        if row.get("triple_review_status"):
+                            badges.append(f"status={row['triple_review_status']}")
+                        if row.get("is_active_for_vqa") is True:
+                            badges.append("active")
+                        elif row.get("is_active_for_vqa") is False:
+                            badges.append("inactive")
+                        if row.get("is_retrieved") is True:
+                            badges.append("retrieved")
+                        if row.get("is_used") is True:
+                            badges.append("used")
+                        if badges:
+                            st.caption(" | ".join(badges))
 
     st.markdown("---")
     if st.button("Lưu triple", type="primary", use_container_width=True, key="save_triple_page"):
@@ -1768,7 +1769,18 @@ def load_verify_triples_page() -> None:
             st.error("Chưa có `is_checked` / `is_drop` trên `kg_triple_catalog`, nên chưa thể lưu verdict toàn cục cho triple.")
             return
 
+        new_subject = edited_subject.strip()
+        new_relation = edited_relation.strip()
+        new_target = edited_target.strip()
+
+        if not new_subject or not new_relation or not new_target:
+            st.error("Subject, Relation, và Target không được để trống!")
+            return
+
         update_payload: dict[str, Any] = {
+            "subject": new_subject,
+            "relation": new_relation,
+            "target": new_target,
             "is_checked": verdict in {"valid", "invalid"},
             "is_drop": verdict == "invalid",
         }

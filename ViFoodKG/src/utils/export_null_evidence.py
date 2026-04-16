@@ -73,7 +73,7 @@ def main():
     df = pd.DataFrame(all_records)
     
     # Create 4 equal ranges to assign to members
-    num_members = 4
+    num_members = 5
     chunk_size = math.ceil(total_records / num_members)
     
     # Add an assignee column (member_1 through member_4)
