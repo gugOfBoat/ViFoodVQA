@@ -30,10 +30,11 @@ ViFoodVQA/
 │   ├── query.py                 ← KGRetriever: Neo→Traverse→Prefilter→Rank (365 lines)
 │   ├── 02_debug_missing_vqa.py  ← Debug images that failed VQA generation
 │   ├── 03_split_dataset.py      ← Split VQA into train/val/test
-│   └── utils/
+│   └── scripts/
 │       ├── import_vqa.py            ← Import generated VQA into Supabase
 │       ├── map_vqa_triples_to_kg.py ← Map VQA triples ↔ kg_triple_catalog
-│       └── stats_vqa_by_split_qtype.py ← VQA statistics by split and qtype
+│       ├── stats_vqa_by_split_qtype.py ← VQA statistics by split and qtype
+│       └── collect_ground_truth_stats.py ← Canonical live Supabase + Neo4j counts
 ├── data/
 │   └── question_types.csv       ← Question type definitions (copy; canonical is ViFoodKG/data/)
 ├── .env                         ← Neo4j + Supabase + Gemini credentials
@@ -172,6 +173,7 @@ Defined in `data/question_types.csv`:
 |----------|------|--------|
 | Generated VQA | `data/vqa/generated_vqa.json` | JSON array of VQA objects |
 | Progress checkpoint | `data/vqa/_generate_vqa_progress.json` | JSON with page number + accumulated results |
+| Ground-truth metrics | `collect_ground_truth_stats.py --format markdown/json` | Read-only Supabase + Neo4j report |
 | Split statistics | `vqa_split_stats.csv` | CSV |
 | Split statistics (LaTeX) | `vqa_split_stats.tex` | LaTeX table |
 

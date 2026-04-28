@@ -1,8 +1,14 @@
 # Báo cáo lỗi coverage KG khi sinh VQA cho ảnh bị thiếu
 
+> Historical note: this issue report records an earlier rerun/debug snapshot.
+> Its counts, including 1,430 valid images and 1,201 VQA-covered images, are not
+> current public metrics. For current counts, use
+> `ViFoodVQA/ViFoodVQA/src/scripts/collect_ground_truth_stats.py` and
+> `docs/ground_truth_metrics.md`.
+
 ## 1. Bối cảnh
 
-Hiện tại bảng `image` có **1430 ảnh hợp lệ** (`is_checked = True`, `is_drop = False`), nhưng bảng `vqa` mới chỉ có câu hỏi cho **1201 ảnh**.  
+Tại thời điểm snapshot này, bảng `image` có **1430 ảnh hợp lệ** (`is_checked = True`, `is_drop = False`), nhưng bảng `vqa` mới chỉ có câu hỏi cho **1201 ảnh**.  
 Nhóm ảnh còn thiếu là **229 ảnh** (danh sách ảnh còn thiếu nằm ở file [`missing_image_ids.txt`](../data/vqa_rerun_missing/missing_image_ids.txt)).
 
 Để chẩn đoán nguyên nhân, tui đã rerun riêng đúng 229 `image_id` bị thiếu và bật chế độ debug để ghi lại fail stage theo từng ảnh/qtype. File debug ([`debug_failures.csv`](../data/vqa_rerun_missing/debug_run1/debug_failures.csv)) cho thấy vấn đề chính **không nằm ở Gemini/parser**, mà nằm ở **coverage của KG và bước map dish / retrieval**.

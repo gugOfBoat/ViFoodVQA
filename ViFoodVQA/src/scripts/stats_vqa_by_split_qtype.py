@@ -10,6 +10,11 @@ from typing import Any
 
 from dotenv import find_dotenv, load_dotenv
 
+try:
+    from collect_ground_truth_stats import normalize_split, should_count_vqa_row
+except ImportError:
+    from .collect_ground_truth_stats import normalize_split, should_count_vqa_row
+
 PAGE_SIZE = 1000
 
 # Extra aliases observed in the project code / older generations.
@@ -57,7 +62,7 @@ DISPLAY_NAME_OVERRIDES: dict[str, str] = {
 }
 
 GROUP_ORDER = ["1-hop", "2-hop", "Reified"]
-SPLIT_ORDER = ["train", "val", "test"]
+SPLIT_ORDER = ["train", "validation", "test"]
 
 
 def norm_text(value: Any) -> str:
@@ -83,6 +88,7 @@ def resolve_question_types_csv(explicit_path: str = "") -> Path:
             cwd / "question_types.csv",
             here / "question_types.csv",
             here / "data" / "question_types.csv",
+            here.parent.parent / "data" / "question_types.csv",
         ]
     )
 
@@ -178,17 +184,6 @@ def make_qtype_registry(csv_path: Path) -> tuple[list[dict[str, str]], dict[str,
     return deduped_rows, alias_to_canonical
 
 
-def normalize_split(value: Any) -> str:
-    raw = slug_text(value)
-    if raw in {"train", "training"}:
-        return "train"
-    if raw in {"val", "valid", "validate", "validation", "dev"}:
-        return "val"
-    if raw in {"test", "testing"}:
-        return "test"
-    return raw
-
-
 def make_supabase_client():
     from supabase import create_client
 
@@ -200,16 +195,18 @@ def make_supabase_client():
     return create_client(url, key)
 
 
-def fetch_all_vqa_rows(client, include_dropped: bool) -> list[dict[str, Any]]:
+def fetch_all_vqa_rows(client) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     start = 0
 
     while True:
-        query = client.table("vqa").select("vqa_id,qtype,split,is_drop").order("vqa_id")
-        if not include_dropped:
-            query = query.eq("is_drop", False)
-
-        resp = query.range(start, start + PAGE_SIZE - 1).execute()
+        resp = (
+            client.table("vqa")
+            .select("vqa_id,qtype,split,is_checked,is_drop,verify_decision")
+            .order("vqa_id")
+            .range(start, start + PAGE_SIZE - 1)
+            .execute()
+        )
         batch = resp.data or []
         if not batch:
             break
@@ -236,16 +233,19 @@ def compute_stats(
     valid_canonicals = {row["canonical_qtype"] for row in qtype_registry}
 
     for row in vqa_rows:
+        split = normalize_split(row.get("split"))
+        if split not in SPLIT_ORDER:
+            unknown_splits[split or "<empty>"] += 1
+            continue
+
+        if not should_count_vqa_row(row):
+            continue
+
         raw_qtype = slug_text(row.get("qtype"))
         canonical = alias_to_canonical.get(raw_qtype, raw_qtype)
-        split = normalize_split(row.get("split"))
 
         if canonical not in valid_canonicals:
             unknown_qtypes[raw_qtype or "<empty>"] += 1
-            continue
-
-        if split not in SPLIT_ORDER:
-            unknown_splits[split or "<empty>"] += 1
             continue
 
         counts[canonical][split] += 1
@@ -254,7 +254,7 @@ def compute_stats(
     for spec in qtype_registry:
         canonical = spec["canonical_qtype"]
         train = counts[canonical]["train"]
-        val = counts[canonical]["val"]
+        val = counts[canonical]["validation"]
         test = counts[canonical]["test"]
         total = train + val + test
         output_rows.append(
@@ -389,7 +389,7 @@ def print_console_summary(rows: list[dict[str, Any]], unknown_qtypes: Counter[st
             print(f"  - {key}: {count}")
 
     if unknown_splits:
-        print("\n[WARN] split not mapped to train/val/test:")
+        print("\n[WARN] split not mapped to train/validation/test:")
         for key, count in unknown_splits.most_common():
             print(f"  - {key}: {count}")
 
@@ -406,7 +406,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--include-dropped",
         action="store_true",
-        help="Include rows where vqa.is_drop = true. Default: exclude dropped rows.",
+        help=(
+            "Deprecated. Canonical policy always counts train/validation without "
+            "verification/drop filters and filters test by is_checked=true,is_drop=false."
+        ),
     )
     parser.add_argument(
         "--output-csv",
@@ -431,8 +434,14 @@ def main() -> None:
     if not qtype_registry:
         raise RuntimeError("No supported qtypes found in question_types.csv")
 
+    if args.include_dropped:
+        print(
+            "[INFO] --include-dropped is deprecated and ignored by the canonical "
+            "split-aware count policy."
+        )
+
     client = make_supabase_client()
-    vqa_rows = fetch_all_vqa_rows(client, include_dropped=args.include_dropped)
+    vqa_rows = fetch_all_vqa_rows(client)
     print(f"Fetched {len(vqa_rows):,} VQA rows for aggregation.")
 
     rows, unknown_qtypes, unknown_splits = compute_stats(vqa_rows, qtype_registry, alias_to_canonical)

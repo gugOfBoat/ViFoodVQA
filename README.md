@@ -27,7 +27,7 @@ This repository contains three main modules:
 
 | Path | Purpose |
 |------|---------|
-| `config/ontology_config.json` | Ontology schema — 10 entity types, 12 relations, 11 question types |
+| `config/ontology_config.json` | Ontology schema — 10 configured entity classes, 12 relations, 11 configured question types |
 | `config/Question Type.md` | Human-readable question type reference |
 | `supabase/` | PostgreSQL migration scripts (ordered: 000 → 001 → 002) |
 | `docs/` | Architecture, contracts, and analysis reports |
@@ -36,7 +36,7 @@ This repository contains three main modules:
 
 ```
 Wikipedia + LLM  ──►  Knowledge Graph (Neo4j)  ──►  VQA Generation  ──►  Human Verification
-                      10 entity types                via Gemini           Streamlit app
+                      10 configured classes          via Gemini           Streamlit app
                       12 relations                    grounded in KG       annotation rubric
                       vector-indexed edges            multiple-choice      KEEP/DROP workflow
 ```
@@ -149,7 +149,6 @@ streamlit run app.py
 
 | Doc | Purpose |
 |-----|---------|
-| [`AGENTS.md`](AGENTS.md) | Coding agent guide: module map, safe changes, change impact |
 | [`docs/architecture.md`](docs/architecture.md) | System architecture and artifact flow |
 | [`docs/contracts/triple_schema.md`](docs/contracts/triple_schema.md) | Triple JSON interface contract |
 | [`docs/contracts/ontology_config.md`](docs/contracts/ontology_config.md) | Ontology governance and change impact |

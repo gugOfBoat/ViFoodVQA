@@ -19,7 +19,7 @@ Dự án này tự động khai phá tri thức từ web tĩnh (Wikipedia), trí
 ## 🌟 Tính năng nổi bật
 
 1. **Web-Grounded Extraction:** 100% tri thức trích xuất đều được neo với Nguồn (URL) và Bằng chứng (Evidence textual snippet), chống hội chứng "ảo giác" (hallucination) của LLM.
-2. **Comprehensive Ontology:** Mô hình hóa 11 loại thực thể (Dish, Ingredient, Region, Allergen, v.v.) và 10 mối quan hệ phức tạp (1-hop, 2-hop, và reification qua quy tắc thay thế nguyên liệu).
+2. **Comprehensive Ontology:** Mô hình hóa 10 lớp thực thể cấu hình trong ontology, bổ sung các nhãn runtime như `Condiment` và `SubstitutionRule`, và bao phủ 12 loại quan hệ trong Neo4j.
 3. **Graph-Vector Hybrid Retrieval:** Chiến lược truy xuất kết hợp Lược đồ Đồ thị (Neo's Graph Traversal) và Không gian Vector (Cosine Similarity) để đem lại độ chính xác cục bộ cao nhất.
 ---
 

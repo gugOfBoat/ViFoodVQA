@@ -243,14 +243,18 @@ flowchart TB
 
 ## Current Scale
 
-| Metric | Value |
-|--------|-------|
-| KG Nodes | 3,382 |
-| KG Edges (triples) | 9,765 |
-| VQA Q&A pairs | 9,290 |
-| Images | 1,460 |
+| Metric | Value | Source |
+|--------|------:|--------|
+| KG Nodes | 3,382 | Neo4j live, 2026-04-28 |
+| KG Edges (triples) | 9,765 | Neo4j live, 2026-04-28 |
+| KG entity labels | 27 | Neo4j live, 2026-04-28 |
+| KG relationship types | 12 | Neo4j live, 2026-04-28 |
+| VQA Q&A pairs | 8,910 | Supabase live split-aware policy, 2026-04-28 |
+| Images | 1,426 | Supabase live `image.is_checked=true` and `image.is_drop=false`, 2026-04-28 |
 
-> Source: project slide (2026-03-23). Run `ViFoodKG/src/utils/check_kg.py` for live counts.
+> Source: `ViFoodVQA/ViFoodVQA/src/scripts/collect_ground_truth_stats.py`.
+> Older slide/report numbers are historical snapshots; see
+> `../../docs/ground_truth_metrics.md` for the current count policy.
 
 ## Change Impact Notes
 
