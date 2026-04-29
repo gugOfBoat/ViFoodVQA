@@ -1,0 +1,64 @@
+dataset:
+  repo_id: hoangphann/vifoodvqa
+  revision:
+  data_dir: /kaggle/input/datasets/hoangphann/vifoodvqa
+  test_split: test
+  require_nonempty_triples: true
+
+paths:
+  output_dir: outputs
+  vqa_src_dir: ViFoodVQA/src
+  kg_question_types_csv: config/question_types.csv
+
+evaluation:
+  seed: 42
+  top_k: 10
+  max_new_tokens: 256
+  temperature: 0
+  fixed_shot_vqa_ids: [153, 149]
+  human_error_subset_size: 120
+  conditions:
+    - name: no_kg_0shot
+      knowledge: none
+      shots: 0
+    - name: no_kg_1shot
+      knowledge: none
+      shots: 1
+    - name: no_kg_2shot
+      knowledge: none
+      shots: 2
+    - name: hybrid
+      knowledge: retrieved
+      retrieval_strategy: hybrid
+      shots: 0
+    - name: graph_only
+      knowledge: retrieved
+      retrieval_strategy: graph_only
+      shots: 0
+    - name: vector_only
+      knowledge: retrieved
+      retrieval_strategy: vector_only
+      shots: 0
+    - name: bm25
+      knowledge: retrieved
+      retrieval_strategy: bm25
+      shots: 0
+    - name: oracle
+      knowledge: oracle
+      shots: 0
+
+models:
+  phi3_vision:
+    type: hf
+    model_id: microsoft/Phi-3.5-vision-instruct
+    adapter: phi3_vision
+    auto_model: causal_lm
+    load_config_first: true
+    device_map: auto
+    torch_dtype: auto
+    attn_implementation: eager
+    num_crops: 16
+    use_cache: true
+    trust_remote_code: true
+    generation_kwargs:
+      pad_token_id: tokenizer
