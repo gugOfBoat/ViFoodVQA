@@ -25,6 +25,20 @@ hf = [
     "torch>=2.1.0",
     "transformers>=4.57.0",
 ]
+hf-qwen = [
+    "accelerate>=0.27.0",
+    "torch>=2.1.0",
+    "transformers>=4.57.0",
+]
+hf-phi = [
+    "accelerate==0.30.0",
+    "numpy==1.24.4; python_version < '3.12'",
+    "numpy==1.26.4; python_version >= '3.12'",
+    "Pillow==10.3.0",
+    "torch==2.3.0",
+    "torchvision==0.18.0",
+    "transformers==4.43.0",
+]
 dev = [
     "pytest>=8.0.0",
 ]

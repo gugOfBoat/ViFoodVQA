@@ -16,7 +16,8 @@ python -m venv .venv
 pip install -e .[dev,hf,api]
 ```
 
-The HF extra requires a recent Transformers build with Qwen3-VL support.
+The default `hf` extra follows the Qwen/latest stack and requires a recent
+Transformers build with Qwen3-VL support.
 
 Set secrets through environment variables or `.env`:
 
@@ -51,13 +52,45 @@ embedding model is available locally:
 python -m vifood_eval.run --config configs/eval.yaml --models gpt_5_2 --conditions hybrid graph_only vector_only bm25 --sample-ids 191 192 --run-id smoke_kg
 ```
 
-Run Hugging Face vision model smoke tests on Kaggle or another GPU environment
-when model weights need to be pulled:
+Run Hugging Face vision smoke tests in model-specific environments when model
+weights need to be pulled. The old combined command is only suitable when the
+runtime package stack supports both models.
 
 ```bash
 python -m vifood_eval.run --config configs/eval.yaml --models qwen3_vl_2b phi3_vision --conditions no_kg_0shot oracle --sample-ids 191 192 --run-id smoke_kaggle_hf
 python -m vifood_eval.run --config configs/eval.yaml --models qwen3_vl_2b phi3_vision --conditions hybrid graph_only vector_only bm25 --sample-ids 191 192 --run-id smoke_kaggle_hf_kg
 ```
+
+## HF Model-Specific Environments
+
+Run Qwen3-VL and Phi-3.5 Vision in separate Colab runtimes. Qwen needs a newer
+Transformers stack, while Phi is faster and more stable with the older stack
+recommended by its model card. Restart the runtime after switching stacks or
+after any CUDA device-side assert.
+
+Qwen runtime:
+
+```bash
+cd /content/drive/Shareddrives/Intro2SLA/code/inference_code/hoang/ViFoodVQA/evaluation
+pip install -e ".[dev,api,hf-qwen]"
+python -m vifood_eval.run --config configs/eval_qwen.yaml --models qwen3_vl_2b --conditions no_kg_0shot oracle --sample-ids 191 192 --run-id smoke_qwen_env
+python -m vifood_eval.report --run-dir outputs/smoke_qwen_env
+```
+
+Phi runtime:
+
+```bash
+cd /content/drive/Shareddrives/Intro2SLA/code/inference_code/hoang/ViFoodVQA/evaluation
+pip uninstall -y transformers torch torchvision accelerate
+pip install -e ".[dev,api,hf-phi]"
+python -m vifood_eval.run --config configs/eval_phi.yaml --models phi3_vision --conditions no_kg_0shot oracle --sample-ids 191 192 --run-id smoke_phi_env
+python -m vifood_eval.report --run-dir outputs/smoke_phi_env
+```
+
+Use `configs/eval_qwen.yaml` for Qwen-only runs and `configs/eval_phi.yaml` for
+Phi-only runs. Do not run both models in the same runtime after package changes.
+The Phi extra uses NumPy 1.24.4 on Python < 3.12 and NumPy 1.26.4 on Python
+3.12+ because NumPy 1.24.4 does not publish Python 3.12 wheels.
 
 Run the full matrix:
 
@@ -77,9 +110,9 @@ quality claims.
   both smoke samples correctly. Treat this as a no-KG visual grounding failure
   that KG can mitigate.
 - `smoke_phi_cache_on`: both no-KG and oracle responses degenerated into repeated
-  `Inc` tokens. Treat this as an HF generation/adapter failure until rerun with
-  the current Phi config (`use_cache: false`, `num_crops: 16`, fast tokenizer
-  loading, explicit EOS, and no anti-repeat logits processors).
+  `Inc` tokens. Treat this as an HF generation/adapter failure. The default
+  shared config keeps Phi conservative with `use_cache: false`; the Phi-specific
+  environment uses the older model-card stack and `use_cache: true` for speed.
 - If PowerShell shows text such as `XÃ©t`, reread files with
   `Get-Content -Encoding UTF8`; the JSONL files are UTF-8.
 
