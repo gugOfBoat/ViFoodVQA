@@ -176,6 +176,12 @@ class RunScenarioTests(unittest.TestCase):
             self.assertTrue(
                 all(call["response_format"] == {"type": "json_object"} for call in classifier_calls)
             )
+            self.assertTrue(
+                all("Do not answer the multiple-choice question" in _message_text(call["messages"]) for call in classifier_calls)
+            )
+            self.assertTrue(
+                all('"qtype":"<one canonical qtype>"' in _message_text(call["messages"]) for call in classifier_calls)
+            )
 
             self.assertEqual([call[1] for call in retriever.calls], [strategy for _, strategy in conditions for _ in samples])
             for condition_name, strategy in conditions:

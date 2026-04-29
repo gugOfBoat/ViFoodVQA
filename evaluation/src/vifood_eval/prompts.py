@@ -63,6 +63,13 @@ def build_answer_messages(
 
 def build_classifier_messages(sample: VQASample) -> list[dict[str, Any]]:
     qtypes = ", ".join(CANONICAL_QTYPES)
+    classifier_text = (
+        "Task: classify this sample for KG retrieval. Do not answer the multiple-choice "
+        "question. Return exactly one JSON object with this schema:\n"
+        '{"qtype":"<one canonical qtype>","food_items":["<visible Vietnamese dish name>"]}\n\n'
+        f"Allowed qtype values: {qtypes}\n\n"
+        f"Question:\n{sample.row['question']}"
+    )
     return [
         {
             "role": "system",
@@ -82,7 +89,7 @@ def build_classifier_messages(sample: VQASample) -> list[dict[str, Any]]:
             "role": "user",
             "content": [
                 {"type": "image", "path": sample.image_path},
-                {"type": "text", "text": f"Question:\n{sample.row['question']}"},
+                {"type": "text", "text": classifier_text},
             ],
         },
     ]
