@@ -115,6 +115,12 @@ class FakeDynamicCache:
     def __init__(self, ddp_cache_data: object = None) -> None:
         self.ddp_cache_data = ddp_cache_data
 
+    def get_seq_length(self, layer_idx: int = 0) -> int:
+        return 5
+
+    def get_max_cache_shape(self, layer_idx: int = 0) -> int:
+        return 8
+
 
 class FakeCausalLM:
     requests: list[dict[str, object]] = []
@@ -235,6 +241,8 @@ class HFVisionModelTests(unittest.TestCase):
     def test_phi_dynamic_cache_legacy_api_is_patched_for_transformers_5(self) -> None:
         if hasattr(FakeDynamicCache, "from_legacy_cache"):
             delattr(FakeDynamicCache, "from_legacy_cache")
+        if hasattr(FakeDynamicCache, "get_usable_length"):
+            delattr(FakeDynamicCache, "get_usable_length")
 
         fake_cache_utils = types.SimpleNamespace(DynamicCache=FakeDynamicCache)
         with patch.dict(sys.modules, {"transformers.cache_utils": fake_cache_utils}):
@@ -246,6 +254,8 @@ class HFVisionModelTests(unittest.TestCase):
         legacy_cache = [("key", "value")]
         converted_cache = FakeDynamicCache.from_legacy_cache(legacy_cache)
         self.assertIs(converted_cache.ddp_cache_data, legacy_cache)
+        self.assertEqual(empty_cache.get_usable_length(2), 5)
+        self.assertEqual(empty_cache.get_usable_length(4), 4)
 
 
 if __name__ == "__main__":

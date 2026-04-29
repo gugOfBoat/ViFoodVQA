@@ -215,16 +215,53 @@ def _patch_dynamic_cache_legacy_api() -> None:
     except ImportError:
         return
 
-    if hasattr(DynamicCache, "from_legacy_cache"):
-        return
+    if not hasattr(DynamicCache, "from_legacy_cache"):
+        @classmethod
+        def from_legacy_cache(cls: type[Any], past_key_values: Any = None) -> Any:
+            if past_key_values is None or isinstance(past_key_values, cls):
+                return past_key_values if past_key_values is not None else cls()
+            return cls(ddp_cache_data=past_key_values)
 
-    @classmethod
-    def from_legacy_cache(cls: type[Any], past_key_values: Any = None) -> Any:
-        if past_key_values is None or isinstance(past_key_values, cls):
-            return past_key_values if past_key_values is not None else cls()
-        return cls(ddp_cache_data=past_key_values)
+        DynamicCache.from_legacy_cache = from_legacy_cache
 
-    DynamicCache.from_legacy_cache = from_legacy_cache
+    if not hasattr(DynamicCache, "get_usable_length"):
+        def get_usable_length(
+            self: Any,
+            new_seq_length: int | None = None,
+            layer_idx: int = 0,
+        ) -> int:
+            previous_seq_length = _cache_seq_length(self, layer_idx)
+            max_length = _cache_max_length(self, layer_idx)
+            if max_length is None or new_seq_length is None:
+                return previous_seq_length
+            if previous_seq_length + new_seq_length > max_length:
+                return max(max_length - new_seq_length, 0)
+            return previous_seq_length
+
+        DynamicCache.get_usable_length = get_usable_length
+
+
+def _cache_seq_length(cache: Any, layer_idx: int) -> int:
+    if not hasattr(cache, "get_seq_length"):
+        return 0
+    try:
+        return int(cache.get_seq_length(layer_idx))
+    except TypeError:
+        return int(cache.get_seq_length())
+
+
+def _cache_max_length(cache: Any, layer_idx: int) -> int | None:
+    for getter_name in ["get_max_cache_shape", "get_max_length"]:
+        if hasattr(cache, getter_name):
+            getter = getattr(cache, getter_name)
+            try:
+                value = getter(layer_idx)
+            except TypeError:
+                value = getter()
+            if value is not None:
+                return int(value)
+    value = getattr(cache, "max_cache_len", None)
+    return int(value) if value is not None else None
 
 
 def _messages_to_chat_template(processor: Any, messages: list[dict[str, Any]]) -> tuple[str, list[Any]]:
