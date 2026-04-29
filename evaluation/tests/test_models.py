@@ -45,6 +45,23 @@ class FakeProcessorLoader:
         return object()
 
 
+class FakeModelConfig:
+    def __init__(self) -> None:
+        self._attn_implementation_internal = "flash_attention_2"
+        self.use_flash_attention_2 = True
+
+
+class FakeConfigLoader:
+    requests: list[dict[str, object]] = []
+    last_config: FakeModelConfig | None = None
+
+    @classmethod
+    def from_pretrained(cls, model_id: str, **kwargs: object) -> FakeModelConfig:
+        cls.requests.append({"model_id": model_id, **kwargs})
+        cls.last_config = FakeModelConfig()
+        return cls.last_config
+
+
 class FakeLoadedModel:
     def eval(self) -> None:
         return None
@@ -92,12 +109,15 @@ class OpenAICompatibleModelTests(unittest.TestCase):
 
 class HFVisionModelTests(unittest.TestCase):
     def setUp(self) -> None:
+        FakeConfigLoader.requests = []
+        FakeConfigLoader.last_config = None
         FakeProcessorLoader.requests = []
         FakeCausalLM.requests = []
         FakeImageTextToText.requests = []
 
     def test_phi_config_can_force_causal_lm_without_flash_attention(self) -> None:
         fake_transformers = types.SimpleNamespace(
+            AutoConfig=FakeConfigLoader,
             AutoProcessor=FakeProcessorLoader,
             AutoModelForCausalLM=FakeCausalLM,
             AutoModelForImageTextToText=FakeImageTextToText,
@@ -109,6 +129,7 @@ class HFVisionModelTests(unittest.TestCase):
                     "model_id": "microsoft/Phi-3.5-vision-instruct",
                     "adapter": "phi3_vision",
                     "auto_model": "causal_lm",
+                    "load_config_first": True,
                     "device_map": "auto",
                     "torch_dtype": "auto",
                     "attn_implementation": "eager",
@@ -118,7 +139,12 @@ class HFVisionModelTests(unittest.TestCase):
             )
 
         self.assertEqual(FakeImageTextToText.requests, [])
+        assert FakeConfigLoader.last_config is not None
+        self.assertEqual(FakeConfigLoader.last_config._attn_implementation_internal, "eager")
+        self.assertEqual(FakeConfigLoader.last_config._attn_implementation, "eager")
+        self.assertEqual(FakeConfigLoader.last_config.use_flash_attention_2, False)
         self.assertEqual(FakeProcessorLoader.requests[0]["use_fast"], False)
+        self.assertIs(FakeCausalLM.requests[0]["config"], FakeConfigLoader.last_config)
         self.assertEqual(FakeCausalLM.requests[0]["attn_implementation"], "eager")
         self.assertEqual(FakeCausalLM.requests[0]["torch_dtype"], "auto")
 

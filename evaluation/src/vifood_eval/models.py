@@ -82,23 +82,34 @@ class HFVisionModel(VisionModel):
     def __init__(self, cfg: dict[str, Any]) -> None:
         try:
             import torch
-            from transformers import AutoModelForCausalLM, AutoModelForImageTextToText, AutoProcessor
+            from transformers import AutoConfig, AutoModelForCausalLM, AutoModelForImageTextToText, AutoProcessor
         except ImportError as exc:
             raise RuntimeError("Install the 'hf' extra to use local Hugging Face models.") from exc
 
         self.torch = torch
         self.adapter = cfg.get("adapter", "qwen_vl")
+        trust_remote_code = cfg.get("trust_remote_code", True)
         processor_kwargs = {
-            "trust_remote_code": cfg.get("trust_remote_code", True),
+            "trust_remote_code": trust_remote_code,
         }
         if "processor_use_fast" in cfg:
             processor_kwargs["use_fast"] = cfg["processor_use_fast"]
         self.processor = AutoProcessor.from_pretrained(cfg["model_id"], **processor_kwargs)
 
+        model_config = None
+        if cfg.get("load_config_first", False):
+            model_config = AutoConfig.from_pretrained(
+                cfg["model_id"],
+                trust_remote_code=trust_remote_code,
+            )
+            _force_attention_implementation(model_config, cfg.get("attn_implementation"))
+
         model_kwargs = {
             "device_map": cfg.get("device_map", "auto"),
-            "trust_remote_code": cfg.get("trust_remote_code", True),
+            "trust_remote_code": trust_remote_code,
         }
+        if model_config is not None:
+            model_kwargs["config"] = model_config
         if "attn_implementation" in cfg:
             model_kwargs["attn_implementation"] = cfg["attn_implementation"]
         torch_dtype = cfg.get("torch_dtype")
@@ -170,6 +181,27 @@ def _messages_to_openai(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
 def _looks_like_response_format_error(exc: Exception) -> bool:
     message = str(exc).lower()
     return "response_format" in message or "response format" in message
+
+
+def _force_attention_implementation(config: Any, attn_implementation: object) -> None:
+    if not attn_implementation:
+        return
+    value = str(attn_implementation)
+    for attr in [
+        "attn_implementation",
+        "_attn_implementation",
+        "_attn_implementation_internal",
+    ]:
+        try:
+            setattr(config, attr, value)
+        except Exception:
+            pass
+    for attr in ["use_flash_attention_2", "flash_attn_2_enabled"]:
+        if hasattr(config, attr):
+            try:
+                setattr(config, attr, False)
+            except Exception:
+                pass
 
 
 def _messages_to_chat_template(processor: Any, messages: list[dict[str, Any]]) -> tuple[str, list[Any]]:

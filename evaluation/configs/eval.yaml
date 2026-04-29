@@ -59,6 +59,7 @@ models:
     model_id: microsoft/Phi-3.5-vision-instruct
     adapter: phi3_vision
     auto_model: causal_lm
+    load_config_first: true
     device_map: auto
     torch_dtype: auto
     attn_implementation: eager
