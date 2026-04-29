@@ -88,6 +88,7 @@ class HFVisionModel(VisionModel):
 
         self.torch = torch
         self.adapter = cfg.get("adapter", "qwen_vl")
+        self.use_cache = cfg.get("use_cache")
         if self.adapter == "phi3_vision":
             _patch_dynamic_cache_legacy_api()
 
@@ -106,6 +107,7 @@ class HFVisionModel(VisionModel):
                 trust_remote_code=trust_remote_code,
             )
             _force_attention_implementation(model_config, cfg.get("attn_implementation"))
+            _force_use_cache(model_config, self.use_cache)
 
         model_kwargs = {
             "device_map": cfg.get("device_map", "auto"),
@@ -129,6 +131,7 @@ class HFVisionModel(VisionModel):
                 self.model = AutoModelForCausalLM.from_pretrained(cfg["model_id"], **model_kwargs)
         else:
             raise ValueError(f"Unsupported Hugging Face auto_model: {auto_model}")
+        _force_use_cache(getattr(self.model, "config", None), self.use_cache)
         self.model.eval()
 
     def generate(
@@ -153,6 +156,8 @@ class HFVisionModel(VisionModel):
             "max_new_tokens": max_new_tokens,
             "do_sample": temperature > 0,
         }
+        if self.use_cache is not None:
+            generate_kwargs["use_cache"] = bool(self.use_cache)
         if temperature > 0:
             generate_kwargs["temperature"] = temperature
 
@@ -207,6 +212,15 @@ def _force_attention_implementation(config: Any, attn_implementation: object) ->
                 setattr(config, attr, False)
             except Exception:
                 pass
+
+
+def _force_use_cache(config: Any, use_cache: object) -> None:
+    if config is None or use_cache is None:
+        return
+    try:
+        setattr(config, "use_cache", bool(use_cache))
+    except Exception:
+        pass
 
 
 def _patch_dynamic_cache_legacy_api() -> None:

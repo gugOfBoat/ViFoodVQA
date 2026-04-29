@@ -72,6 +72,7 @@ class FakeModelConfig:
     def __init__(self) -> None:
         self._attn_implementation_internal = "flash_attention_2"
         self.use_flash_attention_2 = True
+        self.use_cache = True
 
 
 class FakeConfigLoader:
@@ -87,11 +88,16 @@ class FakeConfigLoader:
 
 class FakeLoadedModel:
     device = "cpu"
+    generate_calls: list[dict[str, object]] = []
+
+    def __init__(self) -> None:
+        self.config = FakeModelConfig()
 
     def eval(self) -> None:
         return None
 
     def generate(self, **kwargs: object) -> FakeTensor:
+        self.generate_calls.append(kwargs)
         return FakeTensor()
 
 
@@ -169,6 +175,7 @@ class HFVisionModelTests(unittest.TestCase):
         FakeProcessorLoader.requests = []
         FakeProcessorLoader.processor = object()
         FakeCausalLM.requests = []
+        FakeLoadedModel.generate_calls = []
         FakeImageTextToText.requests = []
 
     def test_phi_config_can_force_causal_lm_without_flash_attention(self) -> None:
@@ -190,6 +197,7 @@ class HFVisionModelTests(unittest.TestCase):
                     "torch_dtype": "auto",
                     "attn_implementation": "eager",
                     "processor_use_fast": False,
+                    "use_cache": False,
                     "trust_remote_code": True,
                 }
             )
@@ -199,6 +207,7 @@ class HFVisionModelTests(unittest.TestCase):
         self.assertEqual(FakeConfigLoader.last_config._attn_implementation_internal, "eager")
         self.assertEqual(FakeConfigLoader.last_config._attn_implementation, "eager")
         self.assertEqual(FakeConfigLoader.last_config.use_flash_attention_2, False)
+        self.assertEqual(FakeConfigLoader.last_config.use_cache, False)
         self.assertEqual(FakeProcessorLoader.requests[0]["use_fast"], False)
         self.assertIs(FakeCausalLM.requests[0]["config"], FakeConfigLoader.last_config)
         self.assertEqual(FakeCausalLM.requests[0]["attn_implementation"], "eager")
@@ -225,6 +234,7 @@ class HFVisionModelTests(unittest.TestCase):
                     "torch_dtype": "auto",
                     "attn_implementation": "eager",
                     "processor_use_fast": False,
+                    "use_cache": False,
                     "trust_remote_code": True,
                 }
             )
@@ -237,6 +247,7 @@ class HFVisionModelTests(unittest.TestCase):
         self.assertEqual(response, "Answer: B")
         self.assertIsInstance(processor.calls[0]["text"], str)
         self.assertNotIsInstance(processor.calls[0]["text"], list)
+        self.assertEqual(FakeLoadedModel.generate_calls[0]["use_cache"], False)
 
     def test_phi_dynamic_cache_legacy_api_is_patched_for_transformers_5(self) -> None:
         if hasattr(FakeDynamicCache, "from_legacy_cache"):
