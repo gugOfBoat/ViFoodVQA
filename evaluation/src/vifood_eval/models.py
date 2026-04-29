@@ -278,11 +278,18 @@ def _patch_dynamic_cache_legacy_api() -> None:
 
         DynamicCache.get_usable_length = get_usable_length
 
+    if not hasattr(DynamicCache, "seen_tokens"):
+        DynamicCache.seen_tokens = property(_cache_seen_tokens)
+
     if not hasattr(DynamicCache, "to_legacy_cache"):
         def to_legacy_cache(self: Any) -> tuple[Any, ...]:
             return _cache_to_legacy(self)
 
         DynamicCache.to_legacy_cache = to_legacy_cache
+
+
+def _cache_seen_tokens(cache: Any) -> int:
+    return _cache_seq_length(cache, 0)
 
 
 def _cache_seq_length(cache: Any, layer_idx: int) -> int:
