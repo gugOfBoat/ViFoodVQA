@@ -22,15 +22,25 @@ class GroundTruthStatsPolicyTest(unittest.TestCase):
         self.assertEqual(normalize_split("custom"), "custom")
         self.assertEqual(normalize_split(None), "<empty>")
 
-    def test_vqa_policy_only_filters_test_rows(self) -> None:
+    def test_vqa_policy_filters_dropped_empty_and_unchecked_test_rows(self) -> None:
         self.assertTrue(
             should_count_vqa_row(
-                {"split": "train", "is_checked": False, "is_drop": True}
+                {
+                    "split": "train",
+                    "is_checked": False,
+                    "is_drop": False,
+                    "triples_used": [{"subject": "a", "relation": "b", "target": "c"}],
+                }
             )
         )
         self.assertTrue(
             should_count_vqa_row(
-                {"split": "validate", "is_checked": False, "is_drop": True}
+                {
+                    "split": "validate",
+                    "is_checked": False,
+                    "is_drop": False,
+                    "triples_used": '[{"subject":"a","relation":"b","target":"c"}]',
+                }
             )
         )
         self.assertTrue(
@@ -40,22 +50,63 @@ class GroundTruthStatsPolicyTest(unittest.TestCase):
                     "is_checked": True,
                     "is_drop": False,
                     "verify_decision": "DROP",
+                    "triples_used": [{"subject": "a", "relation": "b", "target": "c"}],
                 }
             )
         )
         self.assertFalse(
             should_count_vqa_row(
-                {"split": "test", "is_checked": False, "is_drop": False}
+                {
+                    "split": "test",
+                    "is_checked": False,
+                    "is_drop": False,
+                    "triples_used": [{"subject": "a", "relation": "b", "target": "c"}],
+                }
             )
         )
         self.assertFalse(
             should_count_vqa_row(
-                {"split": "test", "is_checked": True, "is_drop": True}
+                {
+                    "split": "test",
+                    "is_checked": True,
+                    "is_drop": True,
+                    "triples_used": [{"subject": "a", "relation": "b", "target": "c"}],
+                }
             )
         )
         self.assertFalse(
             should_count_vqa_row(
-                {"split": "unknown", "is_checked": True, "is_drop": False}
+                {"split": "train", "is_checked": False, "is_drop": False, "triples_used": []}
+            )
+        )
+        self.assertFalse(
+            should_count_vqa_row(
+                {
+                    "split": "train",
+                    "is_checked": False,
+                    "is_drop": True,
+                    "triples_used": [{"subject": "a", "relation": "b", "target": "c"}],
+                }
+            )
+        )
+        self.assertFalse(
+            should_count_vqa_row(
+                {
+                    "split": "validation",
+                    "is_checked": False,
+                    "is_drop": False,
+                    "triples_used": "[]",
+                }
+            )
+        )
+        self.assertFalse(
+            should_count_vqa_row(
+                {
+                    "split": "unknown",
+                    "is_checked": True,
+                    "is_drop": False,
+                    "triples_used": [{"subject": "a", "relation": "b", "target": "c"}],
+                }
             )
         )
 
@@ -67,8 +118,8 @@ class GroundTruthStatsPolicyTest(unittest.TestCase):
                 "qtype": "ingredients",
                 "split": "train",
                 "is_checked": False,
-                "is_drop": True,
-                "triples_used": [],
+                "is_drop": False,
+                "triples_used": [{"subject": "a", "relation": "b", "target": "c"}],
             },
             {
                 "vqa_id": 2,
@@ -76,7 +127,7 @@ class GroundTruthStatsPolicyTest(unittest.TestCase):
                 "qtype": "origin_locality",
                 "split": "validate",
                 "is_checked": False,
-                "is_drop": True,
+                "is_drop": False,
                 "triples_used": '[{"subject":"a","relation":"b","target":"c"}]',
             },
             {
@@ -97,7 +148,7 @@ class GroundTruthStatsPolicyTest(unittest.TestCase):
                 "is_checked": True,
                 "is_drop": True,
                 "verify_decision": "KEEP",
-                "triples_used": [],
+                "triples_used": [{"subject": "a", "relation": "b", "target": "c"}],
             },
             {
                 "vqa_id": 5,
@@ -105,6 +156,15 @@ class GroundTruthStatsPolicyTest(unittest.TestCase):
                 "qtype": "ingredients",
                 "split": "unknown",
                 "is_checked": True,
+                "is_drop": False,
+                "triples_used": [{"subject": "a", "relation": "b", "target": "c"}],
+            },
+            {
+                "vqa_id": 6,
+                "image_id": "img6",
+                "qtype": "ingredients",
+                "split": "train",
+                "is_checked": False,
                 "is_drop": False,
                 "triples_used": [],
             },
@@ -118,7 +178,7 @@ class GroundTruthStatsPolicyTest(unittest.TestCase):
             {"train": 1, "validation": 1, "test": 1},
         )
         self.assertEqual(stats["canonical_unique_image_ids"], 3)
-        self.assertEqual(stats["canonical_empty_triples_used"], 1)
+        self.assertEqual(stats["canonical_empty_triples_used"], 0)
         self.assertEqual(
             stats["canonical_qtype_distribution"],
             {"ingredients": 2, "origin_locality": 1},

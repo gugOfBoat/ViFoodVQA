@@ -59,16 +59,6 @@ def normalize_split(value: Any) -> str:
     return split or "<empty>"
 
 
-def should_count_vqa_row(row: dict[str, Any]) -> bool:
-    """Canonical count policy for Supabase VQA rows."""
-    split = normalize_split(row.get("split"))
-    if split == "test":
-        return row.get("is_checked") is True and row.get("is_drop") is False
-    if split in {"train", "validation"}:
-        return True
-    return False
-
-
 def parse_jsonish(value: Any) -> Any:
     if value is None:
         return []
@@ -83,6 +73,26 @@ def parse_jsonish(value: Any) -> Any:
         except json.JSONDecodeError:
             return []
     return []
+
+
+def has_nonempty_triples_used(row: dict[str, Any]) -> bool:
+    triples_used = parse_jsonish(row.get("triples_used"))
+    return isinstance(triples_used, list) and len(triples_used) > 0
+
+
+def should_count_vqa_row(row: dict[str, Any]) -> bool:
+    """Canonical count policy for Supabase VQA rows."""
+    if row.get("is_drop") is True:
+        return False
+    if not has_nonempty_triples_used(row):
+        return False
+
+    split = normalize_split(row.get("split"))
+    if split == "test":
+        return row.get("is_checked") is True
+    if split in {"train", "validation"}:
+        return True
+    return False
 
 
 def sorted_counter(counter: Counter[str]) -> dict[str, int]:
@@ -199,7 +209,7 @@ def compute_vqa_stats(vqa_rows: list[dict[str, Any]]) -> dict[str, Any]:
     return {
         "source": (
             "Supabase live: vqa split-aware policy "
-            "(test requires is_checked=true and is_drop=false; train/validation unfiltered)"
+            "(globally excludes is_drop=true and empty triples_used; test also requires is_checked=true)"
         ),
         "canonical_total": len(counted_rows),
         "canonical_split_counts": canonical_split_counts_dict,
@@ -334,8 +344,8 @@ def build_report(
             "kg_metrics": "Neo4j Aura live instance only",
             "image_metrics": "Supabase image where is_checked=true and is_drop=false",
             "vqa_metrics": (
-                "Supabase vqa split-aware: test requires is_checked=true and is_drop=false; "
-                "train/validation are counted without verification/drop filters"
+                "Supabase vqa split-aware: globally excludes is_drop=true and empty triples_used; "
+                "test additionally requires is_checked=true"
             ),
             "verify_decision": "Reported as audit metadata; not required for canonical VQA count",
         },

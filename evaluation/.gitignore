@@ -1,0 +1,9 @@
+data/
+hub/
+outputs/
+.env
+.pytest_cache/
+__pycache__/
+*.pyc
+hub/
+*.egg-info/

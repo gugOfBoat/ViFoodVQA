@@ -121,15 +121,16 @@ def should_keep_row_by_split_policy(row: dict[str, Any]) -> bool:
     """
     Current ViFoodVQA export policy:
 
+    - every split:
+        require is_drop = false and non-empty triples_used
+
     - test:
         require human verification:
         is_checked = true
-        is_drop = false
         verify_decision = KEEP
 
     - train / validation:
         allow generated but unverified samples:
-        is_drop = false
         no need is_checked = true
         no need verify_decision = KEEP
     """
@@ -140,6 +141,10 @@ def should_keep_row_by_split_policy(row: dict[str, Any]) -> bool:
     verify_decision = norm(row.get("verify_decision")).upper()
 
     if is_drop:
+        return False
+
+    triples_used = parse_jsonish(row.get("triples_used"))
+    if not isinstance(triples_used, list) or not triples_used:
         return False
 
     if split == "test":

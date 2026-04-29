@@ -202,7 +202,7 @@ def fetch_all_vqa_rows(client) -> list[dict[str, Any]]:
     while True:
         resp = (
             client.table("vqa")
-            .select("vqa_id,qtype,split,is_checked,is_drop,verify_decision")
+            .select("vqa_id,qtype,split,is_checked,is_drop,verify_decision,triples_used")
             .order("vqa_id")
             .range(start, start + PAGE_SIZE - 1)
             .execute()
@@ -407,8 +407,8 @@ def parse_args() -> argparse.Namespace:
         "--include-dropped",
         action="store_true",
         help=(
-            "Deprecated. Canonical policy always counts train/validation without "
-            "verification/drop filters and filters test by is_checked=true,is_drop=false."
+            "Deprecated. Canonical policy excludes dropped rows and empty triples_used "
+            "for every split, and additionally filters test by is_checked=true."
         ),
     )
     parser.add_argument(

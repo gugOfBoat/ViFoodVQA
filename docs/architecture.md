@@ -1,7 +1,7 @@
 # ViFoodKG — System Architecture
 
 > **Canonical source** for architecture decisions, module boundaries, and artifact flow.
-> Last updated: 2026-04-15.
+> Last updated: 2026-04-29.
 
 ## System Purpose
 
@@ -245,12 +245,12 @@ flowchart TB
 
 | Metric | Value | Source |
 |--------|------:|--------|
-| KG Nodes | 3,382 | Neo4j live, 2026-04-28 |
-| KG Edges (triples) | 9,765 | Neo4j live, 2026-04-28 |
-| KG entity labels | 27 | Neo4j live, 2026-04-28 |
-| KG relationship types | 12 | Neo4j live, 2026-04-28 |
-| VQA Q&A pairs | 8,910 | Supabase live split-aware policy, 2026-04-28 |
-| Images | 1,426 | Supabase live `image.is_checked=true` and `image.is_drop=false`, 2026-04-28 |
+| KG Nodes | 3,382 | Neo4j live, 2026-04-29 |
+| KG Edges (triples) | 9,765 | Neo4j live, 2026-04-29 |
+| KG entity labels | 27 | Neo4j live, 2026-04-29 |
+| KG relationship types | 12 | Neo4j live, 2026-04-29 |
+| VQA Q&A pairs | 8,685 | Supabase live split-aware policy excluding dropped and empty-KG rows, 2026-04-29 |
+| Images | 1,426 | Supabase live `image.is_checked=true` and `image.is_drop=false`, 2026-04-29 |
 
 > Source: `ViFoodVQA/ViFoodVQA/src/scripts/collect_ground_truth_stats.py`.
 > Older slide/report numbers are historical snapshots; see
