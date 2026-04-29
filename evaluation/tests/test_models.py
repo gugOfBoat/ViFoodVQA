@@ -243,6 +243,8 @@ class HFVisionModelTests(unittest.TestCase):
             delattr(FakeDynamicCache, "from_legacy_cache")
         if hasattr(FakeDynamicCache, "get_usable_length"):
             delattr(FakeDynamicCache, "get_usable_length")
+        if hasattr(FakeDynamicCache, "to_legacy_cache"):
+            delattr(FakeDynamicCache, "to_legacy_cache")
 
         fake_cache_utils = types.SimpleNamespace(DynamicCache=FakeDynamicCache)
         with patch.dict(sys.modules, {"transformers.cache_utils": fake_cache_utils}):
@@ -256,6 +258,7 @@ class HFVisionModelTests(unittest.TestCase):
         self.assertIs(converted_cache.ddp_cache_data, legacy_cache)
         self.assertEqual(empty_cache.get_usable_length(2), 5)
         self.assertEqual(empty_cache.get_usable_length(4), 4)
+        self.assertEqual(converted_cache.to_legacy_cache(), tuple(legacy_cache))
 
 
 if __name__ == "__main__":

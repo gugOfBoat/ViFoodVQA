@@ -240,6 +240,12 @@ def _patch_dynamic_cache_legacy_api() -> None:
 
         DynamicCache.get_usable_length = get_usable_length
 
+    if not hasattr(DynamicCache, "to_legacy_cache"):
+        def to_legacy_cache(self: Any) -> tuple[Any, ...]:
+            return _cache_to_legacy(self)
+
+        DynamicCache.to_legacy_cache = to_legacy_cache
+
 
 def _cache_seq_length(cache: Any, layer_idx: int) -> int:
     if not hasattr(cache, "get_seq_length"):
@@ -262,6 +268,20 @@ def _cache_max_length(cache: Any, layer_idx: int) -> int | None:
                 return int(value)
     value = getattr(cache, "max_cache_len", None)
     return int(value) if value is not None else None
+
+
+def _cache_to_legacy(cache: Any) -> tuple[Any, ...]:
+    if hasattr(cache, "ddp_cache_data") and getattr(cache, "ddp_cache_data") is not None:
+        return tuple(getattr(cache, "ddp_cache_data"))
+
+    legacy_layers = []
+    for layer in getattr(cache, "layers", []):
+        keys = getattr(layer, "keys", None)
+        values = getattr(layer, "values", None)
+        if keys is None or values is None:
+            continue
+        legacy_layers.append((keys, values))
+    return tuple(legacy_layers)
 
 
 def _messages_to_chat_template(processor: Any, messages: list[dict[str, Any]]) -> tuple[str, list[Any]]:
