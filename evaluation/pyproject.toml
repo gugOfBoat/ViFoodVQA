@@ -31,6 +31,12 @@ hf-qwen = [
     "torch>=2.1.0",
     "transformers>=4.57.0",
 ]
+hf-qwen-4bit = [
+    "accelerate>=0.27.0",
+    "bitsandbytes>=0.43.0",
+    "torch>=2.1.0",
+    "transformers>=4.57.0",
+]
 hf-phi = [
     "accelerate==0.30.0",
     "Pillow==10.3.0",

@@ -1,0 +1,52 @@
+dataset:
+  repo_id: hoangphann/vifoodvqa
+  revision:
+  data_dir: /kaggle/input/datasets/hoangphann/vifoodvqa
+  test_split: test
+  require_nonempty_triples: true
+
+paths:
+  output_dir: outputs
+  vqa_src_dir: ViFoodVQA/src
+  kg_question_types_csv: config/question_types.csv
+
+evaluation:
+  seed: 42
+  top_k: 10
+  max_new_tokens: 256
+  temperature: 0
+  fixed_shot_vqa_ids: [153, 149]
+  human_error_subset_size: 120
+  conditions:
+    - name: no_kg_0shot
+      knowledge: none
+      shots: 0
+    - name: no_kg_1shot
+      knowledge: none
+      shots: 1
+    - name: no_kg_2shot
+      knowledge: none
+      shots: 2
+    - name: oracle
+      knowledge: oracle
+      shots: 0
+
+models:
+  qwen3_vl_2b_4bit:
+    type: hf
+    model_id: unsloth/Qwen3-VL-2B-Instruct-unsloth-bnb-4bit
+    adapter: qwen3_vl
+    device_map: auto
+    torch_dtype: float16
+    attn_implementation: sdpa
+    quantization_config:
+      load_in_4bit: true
+      bnb_4bit_quant_type: nf4
+      bnb_4bit_use_double_quant: true
+      bnb_4bit_compute_dtype: float16
+    generation_kwargs:
+      repetition_penalty: 1.05
+      no_repeat_ngram_size: 6
+      use_cache: true
+      eos_token_id: tokenizer
+      pad_token_id: tokenizer
