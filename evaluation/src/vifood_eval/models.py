@@ -139,38 +139,25 @@ class HFVisionModel(VisionModel):
             else:
                 model_kwargs[dtype_key] = torch_dtype
 
-        # Patch existing quantization_config in model_config to fix Unsloth bugs and use float16
-        if model_config is not None and hasattr(model_config, "quantization_config") and model_config.quantization_config:
-            q_cfg_dict = model_config.quantization_config
-            if isinstance(q_cfg_dict, dict):
-                # 1. Force float16 compute dtype if requested
-                if torch_dtype_str := cfg.get("torch_dtype"):
-                    if isinstance(torch_dtype_str, str) and torch_dtype_str == "float16":
-                        q_cfg_dict["bnb_4bit_compute_dtype"] = "float16"
-                
-                # 2. Unsloth forgot to skip deepstack_merger_list in their Qwen3-VL config.json
-                # We must add it manually to prevent bitsandbytes AssertionError
-                skip_modules = q_cfg_dict.get("llm_int8_skip_modules", [])
-                if isinstance(skip_modules, list):
-                    if "deepstack_merger_list" not in skip_modules:
-                        skip_modules.append("deepstack_merger_list")
-                    if "visual" not in skip_modules:
-                        skip_modules.append("visual")
-                    q_cfg_dict["llm_int8_skip_modules"] = skip_modules
-
-                # 3. Convert back to BitsAndBytesConfig so transformers accepts it
-                try:
-                    from transformers import BitsAndBytesConfig
-                    import torch
-                    
-                    # Resolve compute dtype string
-                    compute_dtype_str = q_cfg_dict.get("bnb_4bit_compute_dtype", "float16")
-                    if isinstance(compute_dtype_str, str) and hasattr(torch, compute_dtype_str):
-                        q_cfg_dict["bnb_4bit_compute_dtype"] = getattr(torch, compute_dtype_str)
-                        
-                    model_kwargs["quantization_config"] = BitsAndBytesConfig(**q_cfg_dict)
-                except Exception as e:
-                    print(f"Warning: failed to patch BitsAndBytesConfig: {e}")
+        # --- BitsAndBytes quantization support ---
+        bnb_cfg = cfg.get("quantization_config")
+        if bnb_cfg:
+            try:
+                from transformers import BitsAndBytesConfig
+            except ImportError as exc:
+                raise RuntimeError(
+                    "Install bitsandbytes and a recent transformers to use quantization_config."
+                ) from exc
+            compute_dtype_name = bnb_cfg.get("bnb_4bit_compute_dtype", "float16")
+            compute_dtype = getattr(torch, compute_dtype_name, torch.float16)
+            skip_modules = bnb_cfg.get("llm_int8_skip_modules", ["visual"])
+            model_kwargs["quantization_config"] = BitsAndBytesConfig(
+                load_in_4bit=bnb_cfg.get("load_in_4bit", True),
+                bnb_4bit_quant_type=bnb_cfg.get("bnb_4bit_quant_type", "nf4"),
+                bnb_4bit_use_double_quant=bnb_cfg.get("bnb_4bit_use_double_quant", True),
+                bnb_4bit_compute_dtype=compute_dtype,
+                llm_int8_skip_modules=skip_modules,
+            )
 
         auto_model = cfg.get("auto_model", "image_text_to_text")
         if self.adapter == "qwen3_vl":
