@@ -27,6 +27,22 @@ evaluation:
     - name: no_kg_2shot
       knowledge: none
       shots: 2
+    - name: hybrid
+      knowledge: retrieved
+      retrieval_strategy: hybrid
+      shots: 0
+    - name: graph_only
+      knowledge: retrieved
+      retrieval_strategy: graph_only
+      shots: 0
+    - name: vector_only
+      knowledge: retrieved
+      retrieval_strategy: vector_only
+      shots: 0
+    - name: bm25
+      knowledge: retrieved
+      retrieval_strategy: bm25
+      shots: 0
     - name: oracle
       knowledge: oracle
       shots: 0
