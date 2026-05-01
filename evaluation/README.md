@@ -32,8 +32,8 @@ NEO4J_PASSWORD=...
 ## Commands
 
 Prepare the dataset under `evaluation/data/vifoodvqa` if it is missing. The
-script accepts the current Hugging Face Parquet export and materializes compact
-JSONL split files used by the runner:
+script accepts the Hugging Face JSONL/images export and still supports legacy
+Parquet shards by materializing compact JSONL split files used by the runner:
 
 ```bash
 python -m vifood_eval.prepare_data --config configs/eval.yaml

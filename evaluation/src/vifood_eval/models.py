@@ -43,7 +43,10 @@ class OpenAICompatibleModel(VisionModel):
             raise RuntimeError("Missing OpenAI-compatible API key environment variable.")
 
         self.model_id = cfg["model_id"]
-        self.client = OpenAI(api_key=api_key, base_url=base_url)
+        client_kwargs: dict[str, Any] = {"api_key": api_key, "base_url": base_url}
+        if cfg.get("default_headers"):
+            client_kwargs["default_headers"] = cfg["default_headers"]
+        self.client = OpenAI(**client_kwargs)
         self.use_response_format = bool(cfg.get("json_response_format", True))
         self.response_format_fallback = bool(cfg.get("json_response_format_fallback", True))
 

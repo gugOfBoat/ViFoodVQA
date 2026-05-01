@@ -28,9 +28,16 @@ class FakeCompletions:
 class FakeOpenAI:
     last_client: "FakeOpenAI | None" = None
 
-    def __init__(self, *, api_key: str, base_url: str | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        api_key: str,
+        base_url: str | None = None,
+        default_headers: dict[str, str] | None = None,
+    ) -> None:
         self.api_key = api_key
         self.base_url = base_url
+        self.default_headers = default_headers
         self.completions = FakeCompletions()
         self.chat = types.SimpleNamespace(completions=self.completions)
         FakeOpenAI.last_client = self
@@ -205,6 +212,22 @@ class OpenAICompatibleModelTests(unittest.TestCase):
         requests = FakeOpenAI.last_client.completions.requests
         self.assertEqual(requests[0]["response_format"], {"type": "json_object"})
         self.assertNotIn("response_format", requests[1])
+
+    def test_configured_default_headers_are_passed_to_client(self) -> None:
+        fake_openai = types.SimpleNamespace(OpenAI=FakeOpenAI)
+
+        with patch.dict(sys.modules, {"openai": fake_openai}):
+            with patch.dict(os.environ, {"TEST_API_KEY": "secret"}, clear=False):
+                OpenAICompatibleModel(
+                    {
+                        "model_id": "fake",
+                        "api_key_env": "TEST_API_KEY",
+                        "default_headers": {"User-Agent": "curl/8.5.0"},
+                    }
+                )
+
+        assert FakeOpenAI.last_client is not None
+        self.assertEqual(FakeOpenAI.last_client.default_headers, {"User-Agent": "curl/8.5.0"})
 
 
 class HFVisionModelTests(unittest.TestCase):

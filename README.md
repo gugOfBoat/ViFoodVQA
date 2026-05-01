@@ -138,7 +138,7 @@ Key entry points:
 | `ViFoodVQA/src/scripts/import_vqa.py` | Import generated VQA JSON into Supabase. |
 | `ViFoodVQA/src/scripts/map_vqa_triples_to_kg.py` | Maintain `kg_triple_catalog` and VQA-triple mapping rows. |
 | `ViFoodVQA/src/scripts/export_hf_dataset.py` | Export Supabase rows to Hugging Face-style JSONL/images. |
-| `ViFoodVQA/src/scripts/upload_hf_dataset.py` | Push the local export with the Hugging Face `datasets` library. |
+| `ViFoodVQA/src/scripts/upload_hf_dataset.py` | Upload JSONL/images to Hugging Face Hub without embedding images into Parquet. |
 
 Supported question types include ingredients, cooking technique, flavor
 profile, origin/locality, allergen restrictions, dietary restrictions,
@@ -270,6 +270,17 @@ python src/scripts/export_hf_dataset.py --export-by-split --download-images
 By default, this writes JSONL files and optional downloaded images under
 `hf_dataset/` in the current working directory. Use `--hf-dir` if you want to
 write the export elsewhere.
+
+Validate and upload the exported dataset:
+
+```bash
+python src/scripts/upload_hf_dataset.py --dry-run
+python src/scripts/upload_hf_dataset.py
+```
+
+The upload script publishes `README.md`, split JSONL files, and `images/`
+directly. By default it deletes old remote `data/*.parquet` shards so image
+bytes are not duplicated per VQA row.
 
 ## Documentation Map
 
