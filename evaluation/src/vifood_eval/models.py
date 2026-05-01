@@ -150,11 +150,13 @@ class HFVisionModel(VisionModel):
                 ) from exc
             compute_dtype_name = bnb_cfg.get("bnb_4bit_compute_dtype", "float16")
             compute_dtype = getattr(torch, compute_dtype_name, torch.float16)
+            skip_modules = bnb_cfg.get("llm_int8_skip_modules", ["visual", "deepstack_merger_list"])
             model_kwargs["quantization_config"] = BitsAndBytesConfig(
                 load_in_4bit=bnb_cfg.get("load_in_4bit", True),
                 bnb_4bit_quant_type=bnb_cfg.get("bnb_4bit_quant_type", "nf4"),
                 bnb_4bit_use_double_quant=bnb_cfg.get("bnb_4bit_use_double_quant", True),
                 bnb_4bit_compute_dtype=compute_dtype,
+                llm_int8_skip_modules=skip_modules,
             )
 
         auto_model = cfg.get("auto_model", "image_text_to_text")
