@@ -139,25 +139,12 @@ class HFVisionModel(VisionModel):
             else:
                 model_kwargs[dtype_key] = torch_dtype
 
-        # --- BitsAndBytes quantization support ---
-        bnb_cfg = cfg.get("quantization_config")
-        if bnb_cfg:
-            try:
-                from transformers import BitsAndBytesConfig
-            except ImportError as exc:
-                raise RuntimeError(
-                    "Install bitsandbytes and a recent transformers to use quantization_config."
-                ) from exc
-            compute_dtype_name = bnb_cfg.get("bnb_4bit_compute_dtype", "float16")
-            compute_dtype = getattr(torch, compute_dtype_name, torch.float16)
-            skip_modules = bnb_cfg.get("llm_int8_skip_modules", ["visual", "deepstack_merger_list"])
-            model_kwargs["quantization_config"] = BitsAndBytesConfig(
-                load_in_4bit=bnb_cfg.get("load_in_4bit", True),
-                bnb_4bit_quant_type=bnb_cfg.get("bnb_4bit_quant_type", "nf4"),
-                bnb_4bit_use_double_quant=bnb_cfg.get("bnb_4bit_use_double_quant", True),
-                bnb_4bit_compute_dtype=compute_dtype,
-                llm_int8_skip_modules=skip_modules,
-            )
+        # Patch existing quantization_config in model_config to use float16 if requested
+        if model_config is not None and hasattr(model_config, "quantization_config"):
+            if "bnb_4bit_compute_dtype" in model_config.quantization_config:
+                if torch_dtype_str := cfg.get("torch_dtype"):
+                    if isinstance(torch_dtype_str, str) and torch_dtype_str == "float16":
+                        model_config.quantization_config["bnb_4bit_compute_dtype"] = "float16"
 
         auto_model = cfg.get("auto_model", "image_text_to_text")
         if self.adapter == "qwen3_vl":
