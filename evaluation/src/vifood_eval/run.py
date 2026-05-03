@@ -105,12 +105,17 @@ def _run_condition(
     done = _completed_ids(out_path) if resume else set()
     top_k = int(cfg["evaluation"]["top_k"])
     completed_count = sum(1 for sample in samples if sample.vqa_id in done)
+    in_notebook = _is_notebook()
+    desc = f"[{scenario_index}/{scenario_total}] {model_name}/{condition['name']}"
     progress_bar = tqdm(
         total=len(samples),
         initial=completed_count,
-        desc=f"[{scenario_index}/{scenario_total}] {model_name}/{condition['name']}",
+        desc=desc,
         unit="q",
         disable=not progress,
+        file=sys.stdout,
+        dynamic_ncols=True,
+        mininterval=1.0,
     )
 
     with progress_bar as bar:
@@ -173,6 +178,27 @@ def _run_condition(
             write_jsonl_row(out_path, row)
             bar.update(1)
             _set_progress_postfix(bar, out_path, sample.vqa_id)
+            if in_notebook:
+                total = bar.total or len(samples)
+                correct_mark = "✓" if row["correct"] else "✗"
+                print(
+                    f"  {desc} | {bar.n}/{total} | "
+                    f"vqa_id={sample.vqa_id} {correct_mark} | "
+                    f"{latency:.1f}s",
+                    flush=True,
+                )
+            else:
+                sys.stdout.flush()
+
+
+def _is_notebook() -> bool:
+    """Detect Kaggle / Jupyter / Colab notebook environments."""
+    try:
+        from IPython import get_ipython
+        shell = get_ipython()
+        return shell is not None and hasattr(shell, "kernel")
+    except Exception:
+        return False
 
 
 def _set_progress_postfix(bar: tqdm[Any], out_path: Path, vqa_id: int | None) -> None:
@@ -185,7 +211,6 @@ def _set_progress_postfix(bar: tqdm[Any], out_path: Path, vqa_id: int | None) ->
         },
         refresh=True,
     )
-
 
 def _classify_sample(
     cfg: dict[str, Any],
