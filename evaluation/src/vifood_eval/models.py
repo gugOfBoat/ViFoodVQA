@@ -106,7 +106,7 @@ class HFVisionModel(VisionModel):
             "trust_remote_code": trust_remote_code,
         }
         if self.adapter == "phi3_vision":
-            processor_kwargs["num_crops"] = cfg.get("num_crops", 16)
+            processor_kwargs["num_crops"] = cfg.get("num_crops", 4)
         if "processor_use_fast" in cfg:
             processor_kwargs["use_fast"] = cfg["processor_use_fast"]
         self.processor = AutoProcessor.from_pretrained(cfg["model_id"], **processor_kwargs)
@@ -130,6 +130,15 @@ class HFVisionModel(VisionModel):
             model_kwargs["attn_implementation"] = cfg["attn_implementation"]
         torch_dtype = cfg.get("torch_dtype")
         if torch_dtype:
+            if isinstance(torch_dtype, str):
+                is_bf16_supported = self.torch.cuda.is_available() and self.torch.cuda.is_bf16_supported()
+                if torch_dtype == "float16" or (torch_dtype == "auto" and not is_bf16_supported):
+                    torch_dtype = self.torch.float16
+                elif torch_dtype == "bfloat16" or (torch_dtype == "auto" and is_bf16_supported):
+                    torch_dtype = self.torch.bfloat16
+                elif torch_dtype == "float32":
+                    torch_dtype = self.torch.float32
+                    
             dtype_key = "dtype" if self.adapter == "qwen3_vl" else "torch_dtype"
             model_kwargs[dtype_key] = torch_dtype
 
@@ -189,7 +198,7 @@ class HFVisionModel(VisionModel):
             if eos_token_id is not None:
                 generate_kwargs["eos_token_id"] = eos_token_id
 
-        with self.torch.no_grad():
+        with self.torch.inference_mode():
             output_ids = self.model.generate(**inputs, **generate_kwargs)
 
         new_tokens = _trim_generated_ids(output_ids, inputs["input_ids"])
@@ -198,6 +207,13 @@ class HFVisionModel(VisionModel):
             skip_special_tokens=True,
             clean_up_tokenization_spaces=False,
         )
+        
+        del inputs
+        del output_ids
+        del new_tokens
+        if self.torch.cuda.is_available():
+            self.torch.cuda.empty_cache()
+            
         return decoded[0].strip()
 
 
@@ -481,4 +497,5 @@ def _image_to_data_url(path: Path) -> str:
 def _load_image(path: Path) -> Any:
     from PIL import Image
 
-    return Image.open(path).convert("RGB")
+    with Image.open(path) as img:
+        return img.convert("RGB")

@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+import gc
 import argparse
 import json
 import time
+import torch
 from datetime import datetime
 from pathlib import Path
 from typing import Any
-
 from tqdm import tqdm
 
 from .config import (
